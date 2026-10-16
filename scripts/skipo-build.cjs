@@ -33,8 +33,18 @@ try {
   run('npx vite build', 'Building Vite frontend assets');
 
   // 2. Single Universal Polyglot Backend bundle
+  const nodeBuiltins = [
+    'http', 'https', 'fs', 'fs/promises', 'path', 'os', 'crypto',
+    'child_process', 'stream', 'util', 'events', 'dgram', 'net',
+    'tls', 'buffer', 'url', 'zlib', 'worker_threads',
+  ];
+  const externalFlags = [
+    "'--external:node:*'",
+    ...nodeBuiltins.map((mod) => `--external:${mod}`),
+  ].join(' ');
+
   run(
-    'npx esbuild src/backend/adapters/universalEntry.ts --bundle --platform=neutral --format=esm --alias:crypto=node:crypto \'--external:node:*\' --outfile=api/index.js',
+    `npx esbuild src/backend/adapters/universalEntry.ts --bundle --platform=neutral --format=esm --alias:crypto=node:crypto ${externalFlags} --outfile=api/index.js`,
     'Bundling Single Universal Polyglot Backend (api/index.js)'
   );
 

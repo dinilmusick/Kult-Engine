@@ -1,24 +1,20 @@
 /**
  * @file TestCaseView.tsx
- * @description Service Test Case Management and Assertion Runner (§13 of IMPLEMENTATION-SPEC.md).
+ * @description Service Test Case Management, Assertion Runner & Round-Trip Verifier (§9, §13 & §29).
  */
 
 import React, { useState } from 'react';
-import { Check, X, Plus, Play, Beaker, ShieldCheck } from 'lucide-react';
+import { Check, X, Plus, Play, Beaker, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useServiceDocumentStore } from '../../../frontend-state/serviceDocumentStore';
+import { runRoundTripTest, type RoundTripReport } from '../../../libraries/services/roundTripTester';
 import type { ServiceTestCase } from '../../../libraries/types/serviceIR';
 
 export const TestCaseView: React.FC = () => {
-  const {
-    document,
-    activeTestCaseId,
-    setActiveTestCase,
-    runSingleTest,
-    saveTestCase,
-  } = useServiceDocumentStore();
-
+  const { document, activeTestCaseId, setActiveTestCase, runSingleTest, saveTestCase } = useServiceDocumentStore();
   const [testResults, setTestResults] = useState<Record<string, boolean>>({});
   const [isRunningAll, setIsRunningAll] = useState(false);
+  const [roundTripReport, setRoundTripReport] = useState<RoundTripReport | null>(null);
+  const [isVerifyingRoundTrip, setIsVerifyingRoundTrip] = useState(false);
 
   const activeTest = document.tests.find((t) => t.id === activeTestCaseId) || document.tests[0];
 
@@ -31,21 +27,25 @@ export const TestCaseView: React.FC = () => {
     setIsRunningAll(true);
     const results: Record<string, boolean> = {};
     for (const test of document.tests) {
-      const passed = await runSingleTest(test.id);
-      results[test.id] = passed;
+      results[test.id] = await runSingleTest(test.id);
     }
     setTestResults(results);
     setIsRunningAll(false);
   };
 
+  const handleRunRoundTrip = async () => {
+    setIsVerifyingRoundTrip(true);
+    const report = await runRoundTripTest(document);
+    setRoundTripReport(report);
+    setIsVerifyingRoundTrip(false);
+  };
+
   const handleAddTest = () => {
     const newTest: ServiceTestCase = {
       id: `t-${Date.now().toString(36)}`,
-      name: `Test Case ${document.tests.length + 1}`,
-      input: { frequency: 528, harmonicCount: 4, cutoffFreq: 2000 },
-      assertions: [
-        { port: 'peakAmplitude', operator: 'defined', value: true },
-      ],
+      name: `Regression Case ${document.tests.length + 1}`,
+      input: { a: 20, b: 5, operation: 'add' },
+      assertions: [{ port: document.service.outputPorts[0]?.name || 'result', operator: 'defined', value: true }],
       enabled: true,
     };
     saveTestCase(newTest);
@@ -61,11 +61,7 @@ export const TestCaseView: React.FC = () => {
             <Beaker size={13} className="text-[var(--skipo-accent)]" />
             <span>Test Cases</span>
           </div>
-          <button
-            onClick={handleAddTest}
-            className="p-1 rounded bg-[var(--skipo-surface)] border border-[var(--skipo-border-color)]/30 hover:bg-[var(--skipo-accent)] hover:text-black"
-            title="Add Test"
-          >
+          <button onClick={handleAddTest} className="p-1 rounded bg-[var(--skipo-surface)] border border-[var(--skipo-border-color)]/30 hover:bg-[var(--skipo-accent)] hover:text-black">
             <Plus size={11} />
           </button>
         </div>
@@ -78,10 +74,8 @@ export const TestCaseView: React.FC = () => {
               <div
                 key={test.id}
                 onClick={() => setActiveTestCase(test.id)}
-                className={`p-2 rounded cursor-pointer border transition-colors flex items-center justify-between ${
-                  active
-                    ? 'border-[var(--skipo-accent)] bg-[var(--skipo-surface-hover)]'
-                    : 'border-transparent hover:bg-[var(--skipo-surface)] text-[var(--skipo-text-muted)]'
+                className={`p-2 rounded cursor-pointer border flex items-center justify-between ${
+                  active ? 'border-[var(--skipo-accent)] bg-[var(--skipo-surface-hover)]' : 'border-transparent hover:bg-[var(--skipo-surface)] text-[var(--skipo-text-muted)]'
                 }`}
               >
                 <div className="flex items-center gap-1.5 truncate">
@@ -90,14 +84,7 @@ export const TestCaseView: React.FC = () => {
                   {result === undefined && <span className="w-3 h-3 rounded-full border border-gray-600 shrink-0" />}
                   <span className="truncate text-[var(--skipo-text)]">{test.name}</span>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRunTest(test.id);
-                  }}
-                  className="p-1 hover:text-[var(--skipo-accent)]"
-                  title="Run Single Test"
-                >
+                <button onClick={(e) => { e.stopPropagation(); handleRunTest(test.id); }} className="p-1 hover:text-[var(--skipo-accent)]">
                   <Play size={10} />
                 </button>
               </div>
@@ -105,63 +92,79 @@ export const TestCaseView: React.FC = () => {
           })}
         </div>
 
-        <div className="p-2 border-t border-[var(--skipo-border-color)]/20">
-          <button
-            onClick={handleRunAll}
-            disabled={isRunningAll}
-            className="w-full py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-center flex items-center justify-center gap-1.5"
-          >
+        <div className="p-2 border-t border-[var(--skipo-border-color)]/20 space-y-1.5">
+          <button onClick={handleRunAll} disabled={isRunningAll} className="w-full py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold flex items-center justify-center gap-1.5">
             <ShieldCheck size={12} />
             <span>{isRunningAll ? 'Evaluating...' : 'Run All Tests'}</span>
+          </button>
+          <button onClick={handleRunRoundTrip} disabled={isVerifyingRoundTrip} className="w-full py-1.5 rounded bg-[var(--skipo-surface)] border border-[var(--skipo-border-color)]/30 text-[var(--skipo-text)] hover:border-[var(--skipo-accent)] flex items-center justify-center gap-1.5">
+            <RefreshCw size={11} className={isVerifyingRoundTrip ? 'animate-spin' : ''} />
+            <span>Round-Trip Parity</span>
           </button>
         </div>
       </div>
 
       {/* Test Detail Column */}
-      {activeTest ? (
-        <div className="flex-1 p-3 overflow-y-auto bg-[var(--skipo-surface)] space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-[var(--skipo-border-color)]/20">
-            <div>
-              <span className="text-sm font-bold text-[var(--skipo-text)]">{activeTest.name}</span>
-              <span className="text-[10px] text-[var(--skipo-text-muted)] block font-mono">{activeTest.id}</span>
+      <div className="flex-1 p-3 overflow-y-auto bg-[var(--skipo-surface)] space-y-3">
+        {roundTripReport && (
+          <div className="p-2.5 rounded border border-[var(--skipo-accent)]/40 bg-[var(--skipo-bg)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[var(--skipo-text)] flex items-center gap-1.5">
+                <RefreshCw size={12} className="text-[var(--skipo-accent)]" />
+                <span>Round-Trip Parity Verification Report</span>
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${roundTripReport.success ? 'bg-[var(--skipo-success)]/20 text-[var(--skipo-success)]' : 'bg-[var(--skipo-danger)]/20 text-[var(--skipo-danger)]'}`}>
+                {roundTripReport.success ? 'PARITY VERIFIED' : 'DRIFT DETECTED'}
+              </span>
             </div>
-            <button
-              onClick={() => handleRunTest(activeTest.id)}
-              className="px-3 py-1 rounded bg-[var(--skipo-accent)] text-black font-bold flex items-center gap-1"
-            >
-              <Play size={11} />
-              <span>Run Test</span>
-            </button>
-          </div>
-
-          <div>
-            <span className="text-[10px] uppercase font-bold text-[var(--skipo-text)] block mb-1">
-              Test Input Payload (JSON)
-            </span>
-            <pre className="p-2 rounded bg-[var(--skipo-bg)] border border-[var(--skipo-border-color)]/20 text-[11px] text-[var(--skipo-text)]">
-              {JSON.stringify(activeTest.input, null, 2)}
-            </pre>
-          </div>
-
-          <div>
-            <span className="text-[10px] uppercase font-bold text-[var(--skipo-text)] block mb-1">
-              Assertions ({activeTest.assertions.length})
-            </span>
-            <div className="space-y-1">
-              {activeTest.assertions.map((ass, i) => (
-                <div key={i} className="p-2 rounded bg-[var(--skipo-bg)] border border-[var(--skipo-border-color)]/20 flex items-center justify-between text-[11px]">
-                  <span>{ass.port} <span className="text-[var(--skipo-accent)] font-bold">{ass.operator}</span> {String(ass.value)}</span>
-                  <span className="text-[9px] text-[var(--skipo-success)] font-bold">ASSERTION ACTIVE</span>
+            <div className="space-y-1 text-[11px]">
+              {roundTripReport.stages.map((st, i) => (
+                <div key={i} className="flex items-center justify-between py-0.5 border-b border-[var(--skipo-border-color)]/10">
+                  <span className="flex items-center gap-1.5">
+                    {st.passed ? <Check size={11} className="text-[var(--skipo-success)]" /> : <X size={11} className="text-[var(--skipo-danger)]" />}
+                    <span>{st.stage}</span>
+                  </span>
+                  <span className="text-[10px] text-[var(--skipo-text-muted)]">{st.message} ({st.durationMs}ms)</span>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex-1 p-4 flex items-center justify-center text-[var(--skipo-text-muted)]">
-          Select or add a test case to inspect assertions
-        </div>
-      )}
+        )}
+
+        {activeTest && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[var(--skipo-border-color)]/20">
+              <div>
+                <span className="text-sm font-bold text-[var(--skipo-text)]">{activeTest.name}</span>
+                <span className="text-[10px] text-[var(--skipo-text-muted)] block font-mono">{activeTest.id}</span>
+              </div>
+              <button onClick={() => handleRunTest(activeTest.id)} className="px-3 py-1 rounded bg-[var(--skipo-accent)] text-black font-bold flex items-center gap-1">
+                <Play size={11} />
+                <span>Run Test</span>
+              </button>
+            </div>
+
+            <div>
+              <span className="text-[10px] uppercase font-bold text-[var(--skipo-text)] block mb-1">Test Input Payload (JSON)</span>
+              <pre className="p-2 rounded bg-[var(--skipo-bg)] border border-[var(--skipo-border-color)]/20 text-[11px] text-[var(--skipo-text)]">
+                {JSON.stringify(activeTest.input, null, 2)}
+              </pre>
+            </div>
+
+            <div>
+              <span className="text-[10px] uppercase font-bold text-[var(--skipo-text)] block mb-1">Assertions ({activeTest.assertions.length})</span>
+              <div className="space-y-1">
+                {activeTest.assertions.map((ass, i) => (
+                  <div key={i} className="p-2 rounded bg-[var(--skipo-bg)] border border-[var(--skipo-border-color)]/20 flex items-center justify-between text-[11px]">
+                    <span>{ass.port} <span className="text-[var(--skipo-accent)] font-bold">{ass.operator}</span> {String(ass.value)}</span>
+                    <span className="text-[9px] text-[var(--skipo-success)] font-bold">ASSERTION ACTIVE</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

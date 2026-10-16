@@ -1,6 +1,6 @@
 /**
  * @file serviceDocumentStore.ts
- * @description Frontend Zustand state for Kult SERVICE_IR authoring, execution, and tests.
+ * @description Frontend Zustand state for Kult SERVICE_IR authoring, execution, and tests (< 200 lines).
  */
 
 import { create } from 'zustand';
@@ -12,9 +12,10 @@ import type {
   ServiceTestCase,
   UISchema,
 } from '../libraries/types/serviceIR';
-import { STARTER_AUDIO_SERVICE } from '../libraries/services/starterServices';
+import { STARTER_KLOKS_ARITHMETIC_SERVICE } from '../libraries/services/starterServices';
 import { validateServiceDocument, type ValidationReport } from '../libraries/services/graphValidator';
 import { executeServiceGraph } from '../libraries/services/graphExecutor';
+import { importKloksServiceCandidate } from '../libraries/services/kloksImporter';
 import type { DiscoveredAsset } from '../libraries/services/assetDiscovery';
 
 interface ServiceDocumentState {
@@ -27,6 +28,7 @@ interface ServiceDocumentState {
   isRunning: boolean;
 
   setDocument: (doc: ServiceDocument) => void;
+  importExistingService: (candidateId: string) => void;
   selectNode: (id: string | null) => void;
   setActiveTestCase: (id: string | null) => void;
   setActiveDockTab: (tab: 'canvas' | 'execution' | 'tests' | 'uipreview' | 'export' | 'raw') => void;
@@ -43,17 +45,27 @@ interface ServiceDocumentState {
 }
 
 export const useServiceDocumentStore = create<ServiceDocumentState>((set, get) => ({
-  document: STARTER_AUDIO_SERVICE,
-  selectedNodeId: 'node-synth',
-  activeTestCaseId: 't-default',
+  document: STARTER_KLOKS_ARITHMETIC_SERVICE,
+  selectedNodeId: 'node-facade-a',
+  activeTestCaseId: 't-add',
   activeDockTab: 'canvas',
   lastRun: null,
-  validationReport: validateServiceDocument(STARTER_AUDIO_SERVICE),
+  validationReport: validateServiceDocument(STARTER_KLOKS_ARITHMETIC_SERVICE),
   isRunning: false,
 
   setDocument: (document) => {
-    const report = validateServiceDocument(document);
-    set({ document, validationReport: report });
+    set({ document, validationReport: validateServiceDocument(document) });
+  },
+
+  importExistingService: (candidateId) => {
+    const doc = importKloksServiceCandidate(candidateId);
+    set({
+      document: doc,
+      selectedNodeId: doc.nodes[1]?.id || null,
+      activeTestCaseId: doc.tests[0]?.id || null,
+      validationReport: validateServiceDocument(doc),
+      lastRun: null,
+    });
   },
 
   selectNode: (selectedNodeId) => set({ selectedNodeId }),
@@ -75,7 +87,7 @@ export const useServiceDocumentStore = create<ServiceDocumentState>((set, get) =
 
   addNodeFromAsset: (asset, position) => {
     const doc = get().document;
-    const newNodeId = `node-${asset.export.toLowerCase()}-${Date.now().toString(36)}`;
+    const newNodeId = `node-${asset.export.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now().toString(36)}`;
     const newNode: NodeSpec = {
       id: newNodeId,
       kind: asset.kind,
@@ -87,11 +99,7 @@ export const useServiceDocumentStore = create<ServiceDocumentState>((set, get) =
       outputs: [...asset.outputPorts],
     };
     const nextDoc = { ...doc, nodes: [...doc.nodes, newNode] };
-    set({
-      document: nextDoc,
-      selectedNodeId: newNodeId,
-      validationReport: validateServiceDocument(nextDoc),
-    });
+    set({ document: nextDoc, selectedNodeId: newNodeId, validationReport: validateServiceDocument(nextDoc) });
   },
 
   removeNode: (id) => {
@@ -110,19 +118,8 @@ export const useServiceDocumentStore = create<ServiceDocumentState>((set, get) =
 
   connectPorts: (sourceNodeId, sourcePort, targetNodeId, targetPort) => {
     const doc = get().document;
-    // Check if edge already exists
-    const exists = doc.edges.some(
-      (e) => e.targetNodeId === targetNodeId && e.targetPort === targetPort
-    );
-    if (exists) return;
-
-    const newEdge: EdgeSpec = {
-      id: `edge-${Date.now().toString(36)}`,
-      sourceNodeId,
-      sourcePort,
-      targetNodeId,
-      targetPort,
-    };
+    if (doc.edges.some((e) => e.targetNodeId === targetNodeId && e.targetPort === targetPort)) return;
+    const newEdge: EdgeSpec = { id: `edge-${Date.now().toString(36)}`, sourceNodeId, sourcePort, targetNodeId, targetPort };
     const nextDoc = { ...doc, edges: [...doc.edges, newEdge] };
     set({ document: nextDoc, validationReport: validateServiceDocument(nextDoc) });
   },
@@ -136,17 +133,13 @@ export const useServiceDocumentStore = create<ServiceDocumentState>((set, get) =
   runService: async (customInputs) => {
     set({ isRunning: true });
     const { document } = get();
-    // Gather default inputs from ServiceInput nodes if not provided
     const inputs: Record<string, unknown> = { ...customInputs };
     const inputNode = document.nodes.find((n) => n.kind === 'ServiceInput');
     if (inputNode) {
       for (const p of inputNode.outputs) {
-        if (inputs[p.name] === undefined && p.defaultValue !== undefined) {
-          inputs[p.name] = p.defaultValue;
-        }
+        if (inputs[p.name] === undefined && p.defaultValue !== undefined) inputs[p.name] = p.defaultValue;
       }
     }
-
     const run = await executeServiceGraph(document, inputs);
     set({ lastRun: run, isRunning: false });
     return run;
@@ -156,7 +149,6 @@ export const useServiceDocumentStore = create<ServiceDocumentState>((set, get) =
     const { document, runService } = get();
     const test = document.tests.find((t) => t.id === testId);
     if (!test) return false;
-
     const run = await runService(test.input);
     let passed = run.status === 'passed';
     for (const assertion of test.assertions) {

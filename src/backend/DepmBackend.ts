@@ -123,8 +123,19 @@ export const DepmBackend = {
       async execute(doc: ServiceDocument, inputs: Record<string, unknown> = {}) { return await executeServiceGraph(doc, inputs); },
       exportArtifact(doc: ServiceDocument) { return generateKloksArtifact(doc); },
       async promote(doc: ServiceDocument) {
+        const val = validateServiceDocument(doc);
+        if (!val.isValid) {
+          return { success: false, error: `Promotion rejected: ${val.errorCount} blocking validation errors in graph`, errors: val.errors };
+        }
         const artifact = generateKloksArtifact(doc);
-        return { success: true, promotedAt: new Date().toISOString(), packageName: artifact.packageName, manifest: artifact.manifest };
+        return {
+          success: true,
+          promotedAt: new Date().toISOString(),
+          packageName: artifact.packageName,
+          manifest: artifact.manifest,
+          contractDiff: artifact.contractDiff,
+          filesCount: artifact.files.length,
+        };
       },
     },
   },

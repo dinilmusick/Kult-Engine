@@ -1,11 +1,11 @@
 /**
  * @file KloksExportView.tsx
  * @description KLOKS Artifact Generator & Promotion Workflow (§19 & §20 of IMPLEMENTATION-SPEC.md).
- * Previews generated package files, manifests, diffs, and executes controlled promotion.
+ * Previews generated package files, manifests, diffs, and executes controlled promotion with zero false fallbacks.
  */
 
 import React, { useState } from 'react';
-import { Package, FileCode, CheckCircle2, ArrowUpRight, Copy } from 'lucide-react';
+import { Package, FileCode, CheckCircle2, ArrowUpRight, Copy, AlertCircle, GitCommit } from 'lucide-react';
 import { useServiceDocumentStore } from '../../../frontend-state/serviceDocumentStore';
 import { generateKloksArtifact } from '../../../libraries/services/kloksExporter';
 import { apiClient } from '../../../libraries/client/apiClient';
@@ -16,16 +16,25 @@ export const KloksExportView: React.FC = () => {
   const [selectedFilePath, setSelectedFilePath] = useState(artifact.files[0]?.path || 'package.json');
   const [isPromoting, setIsPromoting] = useState(false);
   const [promotionResult, setPromotionResult] = useState<string | null>(null);
+  const [promotionError, setPromotionError] = useState<string | null>(null);
 
   const activeFile = artifact.files.find((f) => f.path === selectedFilePath) || artifact.files[0];
 
   const handlePromote = async () => {
     setIsPromoting(true);
+    setPromotionError(null);
+    setPromotionResult(null);
+
     try {
       const res = await apiClient.promoteService(document);
-      setPromotionResult(res.success ? `Successfully promoted to ${artifact.packageName}` : 'Promotion failed');
-    } catch {
-      setPromotionResult(`Promoted ${artifact.packageName} to local KLOKS registry`);
+      if (res && res.success) {
+        setPromotionResult(`Promoted ${res.packageName} (v${document.service.version}) to KLOKS package registry.`);
+      } else {
+        setPromotionError(res?.error || 'Promotion rejected: Service document failed backend validation gates.');
+      }
+    } catch (err: any) {
+      // LAW: Failures MUST remain failures. Never disguise as success.
+      setPromotionError(err?.message || 'Failed to connect to backend promotion facade.');
     } finally {
       setIsPromoting(false);
     }
@@ -39,6 +48,10 @@ export const KloksExportView: React.FC = () => {
           <Package size={14} className="text-[var(--skipo-accent)]" />
           <span className="font-bold text-[var(--skipo-text)]">{artifact.packageName}</span>
           <span className="text-[10px] text-[var(--skipo-text-muted)]">v{document.service.version}</span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--skipo-surface)] text-[var(--skipo-accent)] border border-[var(--skipo-accent)]/20 flex items-center gap-1">
+            <GitCommit size={10} />
+            <span>Diff: +{artifact.contractDiff.addedSymbols.length} symbols</span>
+          </span>
         </div>
 
         <button
@@ -56,7 +69,7 @@ export const KloksExportView: React.FC = () => {
         {/* File tree */}
         <div className="p-2 bg-[var(--skipo-bg)] space-y-1 overflow-y-auto">
           <span className="text-[10px] uppercase font-bold text-[var(--skipo-text-muted)] block mb-1">
-            Package Artifact Files
+            Generated Package Files ({artifact.files.length})
           </span>
           {artifact.files.map((file) => {
             const active = activeFile?.path === file.path;
@@ -75,6 +88,16 @@ export const KloksExportView: React.FC = () => {
               </button>
             );
           })}
+
+          <div className="pt-3 border-t border-[var(--skipo-border-color)]/20">
+            <span className="text-[10px] uppercase font-bold text-[var(--skipo-text-muted)] block mb-1">
+              Contract Diff Summary
+            </span>
+            <div className="p-1.5 rounded bg-[var(--skipo-surface)] text-[10px] space-y-1 text-[var(--skipo-text-muted)]">
+              <div>SemVer: <span className="text-[var(--skipo-accent)] font-bold">{artifact.contractDiff.versionRecommendation}</span></div>
+              <div>Added: <span className="text-[var(--skipo-success)] font-bold">{artifact.contractDiff.addedSymbols.join(', ')}</span></div>
+            </div>
+          </div>
         </div>
 
         {/* File preview */}
@@ -95,10 +118,18 @@ export const KloksExportView: React.FC = () => {
             </pre>
           </div>
 
+          {/* Promotion Notifications (Strict: No False Success) */}
           {promotionResult && (
             <div className="mt-3 p-2 rounded border border-[var(--skipo-success)]/40 bg-[var(--skipo-bg)] flex items-center gap-2 text-[var(--skipo-success)]">
               <CheckCircle2 size={13} />
               <span>{promotionResult}</span>
+            </div>
+          )}
+
+          {promotionError && (
+            <div className="mt-3 p-2 rounded border border-[var(--skipo-danger)]/40 bg-[var(--skipo-bg)] flex items-center gap-2 text-[var(--skipo-danger)]">
+              <AlertCircle size={13} />
+              <span>{promotionError}</span>
             </div>
           )}
         </div>

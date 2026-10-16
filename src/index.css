@@ -23,3 +23,29 @@ html, body {
   border-radius: var(--skipo-radius-sm);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--skipo-accent); }
+
+/* ─── React Flow Theming Override ─── */
+.react-flow__controls {
+  background-color: var(--skipo-surface) !important;
+  border: 1px solid var(--skipo-border-color) !important;
+  border-radius: var(--skipo-radius) !important;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+.react-flow__controls button {
+  background-color: var(--skipo-surface) !important;
+  border-bottom: 1px solid var(--skipo-border-color) !important;
+  fill: var(--skipo-text) !important;
+  color: var(--skipo-text) !important;
+}
+.react-flow__controls button:hover {
+  background-color: var(--skipo-surface-hover) !important;
+  fill: var(--skipo-accent) !important;
+  color: var(--skipo-accent) !important;
+}
+.react-flow__controls button svg {
+  fill: var(--skipo-text) !important;
+}
+.react-flow__attribution {
+  display: none !important;
+}

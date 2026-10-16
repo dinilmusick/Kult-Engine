@@ -1,11 +1,12 @@
 /**
  * @file graphExecutor.ts
- * @description Real Execution & Debugger Engine (§12 & §14 of IMPLEMENTATION-SPEC.md).
- * Topologically sorts and evaluates SERVICE_IR nodes, capturing execution traces.
+ * @description Real Execution & Debugger Engine (§10, §12 & §14 of IMPLEMENTATION-SPEC.md).
+ * Enforces pre-execution validation, strict topological order, and authentic KRNLTS evaluation.
  */
 
 import type { ServiceDocument, ExecutionRun, NodeExecutionResult } from '../types/serviceIR';
-import { evaluateNode } from './nodeEvaluators';
+import { validateServiceDocument } from './graphValidator';
+import { executeKrnlNode } from './krnlRuntime';
 
 export async function executeServiceGraph(
   doc: ServiceDocument,
@@ -14,8 +15,26 @@ export async function executeServiceGraph(
   const startTime = Date.now();
   const runId = `run_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const nodeResults: NodeExecutionResult[] = [];
-  const logs: string[] = [`[KRNLTS Engine] Starting execution run ${runId}`];
+  const logs: string[] = [`[KRNLTS] Starting authoritative service execution: ${doc.service.name}`];
   const errors: string[] = [];
+
+  // §10: Strict Pre-Execution Validation Gate — NO EXECUTION ON INVALID GRAPH
+  const validation = validateServiceDocument(doc);
+  if (!validation.isValid) {
+    const errorMsgs = validation.errors.map((e) => `[${e.code}] ${e.message}`);
+    return {
+      runId,
+      serviceRevision: doc.service.version || '1.0.0',
+      startedAt: new Date(startTime).toISOString(),
+      status: 'failed',
+      input: suppliedInputs,
+      nodeResults: [],
+      logs: [...logs, '[KRNLTS] Execution blocked: Graph has fatal validation errors'],
+      errors: errorMsgs,
+      output: {},
+      durationMs: Date.now() - startTime,
+    };
+  }
 
   // Calculate inDegree and outgoing edges for topological sorting
   const inDegree = new Map<string, number>();
@@ -48,10 +67,6 @@ export async function executeServiceGraph(
     }
   }
 
-  for (const node of doc.nodes) {
-    if (!executionOrder.includes(node.id)) executionOrder.push(node.id);
-  }
-
   // wireValues: `${nodeId}:${portId}` -> value
   const wireValues = new Map<string, unknown>();
   let orderIndex = 1;
@@ -73,7 +88,7 @@ export async function executeServiceGraph(
       nodeInputValues[portName] = srcVal;
     }
 
-    // If ServiceInput node, inject suppliedInputs
+    // Inject service inputs for ServiceInput nodes
     if (node.kind === 'ServiceInput') {
       for (const p of node.outputs) {
         if (suppliedInputs[p.name] !== undefined) {
@@ -84,7 +99,7 @@ export async function executeServiceGraph(
       }
     }
 
-    // Defaults for unsupplied inputs
+    // Apply defaults for unsupplied inputs
     for (const inPort of node.inputs) {
       if (nodeInputValues[inPort.name] === undefined && inPort.defaultValue !== undefined) {
         nodeInputValues[inPort.name] = inPort.defaultValue;
@@ -92,7 +107,8 @@ export async function executeServiceGraph(
     }
 
     try {
-      const nodeOutputs = evaluateNode(node.type, nodeInputValues, node.config);
+      // Execute authentic KRNLTS node callable
+      const nodeOutputs = await executeKrnlNode(node, nodeInputValues, node.config);
       const nodeDuration = Date.now() - nodeStart;
 
       for (const outPort of node.outputs) {
@@ -113,7 +129,7 @@ export async function executeServiceGraph(
         executionOrder: orderIndex++,
         timestamp: new Date().toISOString(),
       });
-      logs.push(`[${node.type}] Node ${node.id} evaluated in ${nodeDuration}ms`);
+      logs.push(`[${node.type}] Node ${node.id} executed successfully (${nodeDuration}ms)`);
     } catch (err: any) {
       const errorMsg = err?.message || 'Execution error';
       errors.push(`Node ${node.id} (${node.type}) failed: ${errorMsg}`);
@@ -127,11 +143,12 @@ export async function executeServiceGraph(
         executionOrder: orderIndex++,
         timestamp: new Date().toISOString(),
       });
+      break; // Halt on first unhandled node failure
     }
   }
 
   const durationMs = Date.now() - startTime;
-  logs.push(`[KRNLTS Engine] Execution finished in ${durationMs}ms`);
+  logs.push(`[KRNLTS] Pipeline execution finished in ${durationMs}ms`);
 
   return {
     runId,

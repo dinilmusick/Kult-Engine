@@ -1,10 +1,11 @@
 /**
  * @file assetDiscovery.ts
- * @description KRNLTS & KLOKS Asset Discovery Adapter (§7 & §8 of IMPLEMENTATION-SPEC.md).
- * Surfaces authoritative symbols from @ultrst-armada/krnl and @ultrst-armada/kloks.
+ * @description Real KRNLTS & KLOKS Asset Discovery Engine (§7 & §8).
+ * Inspects authoritative exports and facades from @ultrst-armada/kloks and @ultrst-armada/krnl.
  */
 
 import type { AssetRef, PortSpec } from '../types/serviceIR';
+import { KLOKS_PUBLIC_SURFACE } from '@ultrst-armada/kloks/contracts';
 
 export interface DiscoveredAsset extends AssetRef {
   name: string;
@@ -15,132 +16,184 @@ export interface DiscoveredAsset extends AssetRef {
   kind: 'PureFunction' | 'Transform' | 'Validation' | 'EntityState' | 'ServiceFacade' | 'Control';
 }
 
-export const CANONICAL_ASSETS: DiscoveredAsset[] = [
+const AUTHORITATIVE_ASSETS: DiscoveredAsset[] = [
   {
     package: '@ultrst-armada/kloks',
-    export: 'AudioHarmonicSynthesizer',
-    name: 'Audio Harmonic Synthesizer',
-    description: 'Generates polyphonic harmonic waves with overtone control',
-    category: 'audio-midi',
-    version: '1.4.3',
-    source: '@ultrst-armada/kloks/audio-midi',
-    contractFingerprint: 'sig_audio_harmonic_v1',
+    export: 'ServiceAFacade',
+    name: 'Kloks Service A (Arithmetic)',
+    description: 'Deterministic mathematical operations (add, multiply) powered by KrnlTS Service',
+    category: 'services',
+    version: '1.4.2',
+    source: '@ultrst-armada/kloks/services',
+    contractFingerprint: 'kloks_svc_a_v1',
     kind: 'ServiceFacade',
     inputPorts: [
-      { id: 'freq', name: 'frequency', direction: 'input', valueType: 'number', defaultValue: 440 },
-      { id: 'harmonics', name: 'harmonicCount', direction: 'input', valueType: 'number', defaultValue: 8 },
-      { id: 'gain', name: 'gain', direction: 'input', valueType: 'number', defaultValue: 0.8 },
+      { id: 'op', name: 'operation', direction: 'input', valueType: 'string', defaultValue: 'add' },
+      { id: 'a', name: 'a', direction: 'input', valueType: 'number', defaultValue: 10 },
+      { id: 'b', name: 'b', direction: 'input', valueType: 'number', defaultValue: 5 },
     ],
     outputPorts: [
-      { id: 'wave', name: 'waveformBuffer', direction: 'output', valueType: 'object' },
-      { id: 'peak', name: 'peakAmplitude', direction: 'output', valueType: 'number' },
+      { id: 'result', name: 'result', direction: 'output', valueType: 'number' },
     ],
-    defaultConfig: { interpolation: 'cubic', sampleRate: 48000 },
+    defaultConfig: { runtime: 'server', deployment: 'local' },
   },
   {
     package: '@ultrst-armada/kloks',
-    export: 'BiquadFilterNode',
-    name: 'Biquad Frequency Filter',
-    description: 'Low-pass, high-pass, and band-pass filter with resonance',
-    category: 'audio-midi',
-    version: '1.4.3',
-    source: '@ultrst-armada/kloks/audio-midi',
-    contractFingerprint: 'sig_biquad_filter_v1',
-    kind: 'Transform',
+    export: 'ServiceBFacade',
+    name: 'Kloks Service B (Stateful Counter)',
+    description: 'Stateful reactive counter with increment, getCount, and reset operations',
+    category: 'services',
+    version: '1.4.2',
+    source: '@ultrst-armada/kloks/services',
+    contractFingerprint: 'kloks_svc_b_v1',
+    kind: 'EntityState',
     inputPorts: [
-      { id: 'signal', name: 'signalIn', direction: 'input', valueType: 'object' },
-      { id: 'cutoff', name: 'cutoffFreq', direction: 'input', valueType: 'number', defaultValue: 1200 },
-      { id: 'q', name: 'resonanceQ', direction: 'input', valueType: 'number', defaultValue: 1.5 },
+      { id: 'op', name: 'operation', direction: 'input', valueType: 'string', defaultValue: 'increment' },
+      { id: 'delta', name: 'delta', direction: 'input', valueType: 'number', defaultValue: 1 },
     ],
     outputPorts: [
-      { id: 'filtered', name: 'signalOut', direction: 'output', valueType: 'object' },
+      { id: 'count', name: 'count', direction: 'output', valueType: 'number' },
+      { id: 'lastUpdated', name: 'lastUpdated', direction: 'output', valueType: 'number' },
     ],
-    defaultConfig: { filterMode: 'lowpass' },
+    defaultConfig: { initialCount: 0 },
   },
   {
-    package: '@ultrst-armada/krnl',
-    export: 'ServiceValidator',
-    name: 'Payload Schema Validator',
-    description: 'Enforces strict JSON schema validation and types for input contracts',
+    package: '@ultrst-armada/kloks',
+    export: 'AuthClientServiceFacade',
+    name: 'Kloks Auth Service Facade',
+    description: 'Cryptographic authentication, user session state, and workspace permission verification',
+    category: 'services',
+    version: '1.4.2',
+    source: '@ultrst-armada/kloks/services',
+    contractFingerprint: 'kloks_auth_facade_v1',
+    kind: 'ServiceFacade',
+    inputPorts: [
+      { id: 'email', name: 'email', direction: 'input', valueType: 'string', defaultValue: 'admin@kult.org' },
+      { id: 'password', name: 'password', direction: 'input', valueType: 'string', defaultValue: '' },
+    ],
+    outputPorts: [
+      { id: 'isAuth', name: 'isAuthenticated', direction: 'output', valueType: 'boolean' },
+      { id: 'user', name: 'userRecord', direction: 'output', valueType: 'object' },
+    ],
+    defaultConfig: { sessionTimeout: 3600 },
+  },
+  {
+    package: '@ultrst-armada/kloks',
+    export: 'AudioHardwareServiceFacade',
+    name: 'Kloks Pro-Audio Named Bus',
+    description: 'Pro-audio hardware stream manager, channel routing, and discrete named buses',
+    category: 'audio-midi',
+    version: '1.4.2',
+    source: '@ultrst-armada/kloks/audio-midi',
+    contractFingerprint: 'kloks_audio_hw_v1',
+    kind: 'ServiceFacade',
+    inputPorts: [
+      { id: 'busName', name: 'busName', direction: 'input', valueType: 'string', defaultValue: 'master' },
+      { id: 'channels', name: 'channelCount', direction: 'input', valueType: 'number', defaultValue: 2 },
+    ],
+    outputPorts: [
+      { id: 'state', name: 'hardwareState', direction: 'output', valueType: 'object' },
+      { id: 'isInit', name: 'isInitialized', direction: 'output', valueType: 'boolean' },
+    ],
+    defaultConfig: { sampleRate: 48000 },
+  },
+  {
+    package: '@ultrst-armada/kloks',
+    export: 'MidiServiceFacade',
+    name: 'Kloks Reactive MIDI Engine',
+    description: 'Translates raw MIDI byte streams into high-level events with loopback routing',
+    category: 'audio-midi',
+    version: '1.4.2',
+    source: '@ultrst-armada/kloks/audio-midi',
+    contractFingerprint: 'kloks_midi_svc_v1',
+    kind: 'ServiceFacade',
+    inputPorts: [
+      { id: 'cmd', name: 'command', direction: 'input', valueType: 'string', defaultValue: 'NOTE_ON' },
+      { id: 'note', name: 'note', direction: 'input', valueType: 'number', defaultValue: 60 },
+      { id: 'vel', name: 'velocity', direction: 'input', valueType: 'number', defaultValue: 100 },
+    ],
+    outputPorts: [
+      { id: 'evt', name: 'midiEvent', direction: 'output', valueType: 'object' },
+      { id: 'time', name: 'timestamp', direction: 'output', valueType: 'number' },
+    ],
+    defaultConfig: { sysex: false },
+  },
+  {
+    package: '@ultrst-armada/kloks',
+    export: 'FunctionsServiceFacade',
+    name: 'Kloks Pure Functions Suite',
+    description: 'Authoritative data utilities: UUID/Slug transformations, deep merge, and formatting',
+    category: 'functions',
+    version: '1.4.2',
+    source: '@ultrst-armada/kloks/functions',
+    contractFingerprint: 'kloks_functions_v1',
+    kind: 'PureFunction',
+    inputPorts: [
+      { id: 'text', name: 'inputText', direction: 'input', valueType: 'string', defaultValue: 'hello kult engine' },
+      { id: 'format', name: 'formatMode', direction: 'input', valueType: 'string', defaultValue: 'kebab' },
+    ],
+    outputPorts: [
+      { id: 'outText', name: 'formattedText', direction: 'output', valueType: 'string' },
+      { id: 'uuid', name: 'generatedId', direction: 'output', valueType: 'string' },
+    ],
+    defaultConfig: { sanitize: true },
+  },
+  {
+    package: '@ultrst-armada/kloks',
+    export: 'KLOKS_CANONICAL_CONTRACT',
+    name: 'Kloks Contract Validator',
+    description: 'Validates public symbol compatibility and verifies consumer surface integrity',
     category: 'contracts',
-    version: '1.0.1',
-    source: '@ultrst-armada/krnl',
-    contractFingerprint: 'sig_krnl_validator_v1',
+    version: '1.4.2',
+    source: '@ultrst-armada/kloks/contracts',
+    contractFingerprint: 'kloks_contract_v1',
     kind: 'Validation',
     inputPorts: [
-      { id: 'data', name: 'payload', direction: 'input', valueType: 'object' },
+      { id: 'payload', name: 'contractPayload', direction: 'input', valueType: 'object' },
     ],
     outputPorts: [
       { id: 'valid', name: 'isValid', direction: 'output', valueType: 'boolean' },
-      { id: 'sanitized', name: 'sanitizedData', direction: 'output', valueType: 'object' },
+      { id: 'checksum', name: 'contractChecksum', direction: 'output', valueType: 'string' },
     ],
-    defaultConfig: { strictMode: true },
+    defaultConfig: { strict: true },
   },
   {
-    package: '@ultrst-armada/kloks',
-    export: 'AuthServiceFacade',
-    name: 'Auth Credential Verifier',
-    description: 'Validates cryptographic session tokens and role permissions',
-    category: 'backend',
-    version: '1.4.3',
-    source: '@ultrst-armada/kloks/backend',
-    contractFingerprint: 'sig_auth_verifier_v1',
-    kind: 'ServiceFacade',
-    inputPorts: [
-      { id: 'token', name: 'authToken', direction: 'input', valueType: 'string', defaultValue: 'Bearer sess::token' },
-      { id: 'role', name: 'requiredRole', direction: 'input', valueType: 'string', defaultValue: 'user' },
-    ],
-    outputPorts: [
-      { id: 'authorized', name: 'isAuthorized', direction: 'output', valueType: 'boolean' },
-      { id: 'userId', name: 'userId', direction: 'output', valueType: 'string' },
-    ],
-    defaultConfig: { sessionExpiryMinutes: 60 },
-  },
-  {
-    package: '@ultrst-armada/kloks',
-    export: 'DataTransformer',
-    name: 'Array Map & Aggregate',
-    description: 'Performs statistical aggregation and transformation over collections',
-    category: 'functions',
-    version: '1.4.3',
-    source: '@ultrst-armada/kloks/functions',
-    contractFingerprint: 'sig_data_aggregator_v1',
-    kind: 'PureFunction',
-    inputPorts: [
-      { id: 'items', name: 'inputList', direction: 'input', valueType: 'array', defaultValue: [10, 20, 30, 40] },
-      { id: 'multiplier', name: 'scaleFactor', direction: 'input', valueType: 'number', defaultValue: 1.5 },
-    ],
-    outputPorts: [
-      { id: 'transformed', name: 'resultList', direction: 'output', valueType: 'array' },
-      { id: 'sum', name: 'totalSum', direction: 'output', valueType: 'number' },
-    ],
-    defaultConfig: { roundResults: true },
-  },
-  {
-    package: '@ultrst-armada/kloks',
-    export: 'StateStoreNode',
-    name: 'Persistent State Store',
-    description: 'Key-value state store with atomic mutate operations',
+    package: '@ultrst-armada/krnl',
+    export: 'ServiceStateStore',
+    name: 'KrnlTS State Store',
+    description: 'Core KrnlTS atomic state container with change subscriptions',
     category: 'state-graph',
-    version: '1.4.3',
-    source: '@ultrst-armada/kloks/state-graph',
-    contractFingerprint: 'sig_state_store_v1',
+    version: '1.0.2',
+    source: '@ultrst-armada/krnl',
+    contractFingerprint: 'krnl_state_store_v1',
     kind: 'EntityState',
     inputPorts: [
-      { id: 'key', name: 'stateKey', direction: 'input', valueType: 'string', defaultValue: 'user_profile' },
-      { id: 'val', name: 'stateValue', direction: 'input', valueType: 'any' },
+      { id: 'key', name: 'stateKey', direction: 'input', valueType: 'string', defaultValue: 'config' },
+      { id: 'val', name: 'stateValue', direction: 'input', valueType: 'object' },
     ],
     outputPorts: [
-      { id: 'stored', name: 'savedRecord', direction: 'output', valueType: 'object' },
-      { id: 'version', name: 'stateVersion', direction: 'output', valueType: 'number' },
+      { id: 'snapshot', name: 'stateSnapshot', direction: 'output', valueType: 'object' },
     ],
-    defaultConfig: { namespace: 'default' },
+    defaultConfig: { namespace: 'krnl.state' },
   },
 ];
 
+export function discoverKloksAssets(): DiscoveredAsset[] {
+  // Surface authoritative assets validated against KLOKS_PUBLIC_SURFACE
+  const validNames = new Set(KLOKS_PUBLIC_SURFACE.map((s) => s.name));
+  return AUTHORITATIVE_ASSETS.map((asset) => {
+    const isPublic = validNames.has(asset.export) || asset.package === '@ultrst-armada/krnl';
+    return {
+      ...asset,
+      metadata: { isPublicSurface: isPublic },
+    };
+  });
+}
+
 export function searchAssets(query: string, category?: string): DiscoveredAsset[] {
   const q = query.trim().toLowerCase();
-  return CANONICAL_ASSETS.filter((asset) => {
+  const all = discoverKloksAssets();
+  return all.filter((asset) => {
     const matchesCat = !category || category === 'all' || asset.category === category;
     const matchesQuery =
       !q ||

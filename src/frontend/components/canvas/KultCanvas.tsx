@@ -14,7 +14,6 @@ import {
   type Node,
   type Edge,
   type NodeChange,
-  applyNodeChanges,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useServiceDocumentStore } from '../../../frontend-state/serviceDocumentStore';
@@ -23,6 +22,8 @@ import { KultServiceNode } from './KultServiceNode';
 const nodeTypes = {
   serviceNode: KultServiceNode,
 };
+
+const proOptions = { hideAttribution: true };
 
 export const KultCanvas: React.FC = () => {
   const {
@@ -125,11 +126,13 @@ export const KultCanvas: React.FC = () => {
         fitView
         minZoom={0.2}
         maxZoom={2.5}
+        proOptions={proOptions}
       >
         <Background gap={18} size={1.2} color="rgba(255, 255, 255, 0.08)" />
         <Controls className="!bg-[var(--skipo-surface)] !border-[var(--skipo-border-color)]/30 !rounded-md" />
         <MiniMap
           className="!bg-[var(--skipo-surface)] !border-[var(--skipo-border-color)]/30 !rounded-md"
+          style={{ transform: 'scale(0.70)', transformOrigin: 'bottom right' }}
           nodeColor="var(--skipo-accent)"
           maskColor="rgba(0, 0, 0, 0.65)"
         />

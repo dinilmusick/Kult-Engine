@@ -1,13 +1,14 @@
 /**
  * @file KultToolbar.tsx
  * @description Master Kult Engine Top Toolbar (§25 of IMPLEMENTATION-SPEC.md).
- * Provides service switcher, execution trigger, validation badge, export action, and session controls.
+ * Service switcher, import existing KLOKS services, execution trigger, validation badge, export action (< 200 lines).
  */
 
-import React from 'react';
-import { Play, CheckCircle2, AlertTriangle, Package, Beaker, LayoutTemplate, LogOut, HardDrive, Layers } from 'lucide-react';
+import React, { useState } from 'react';
+import { Play, CheckCircle2, AlertTriangle, Package, Beaker, LayoutTemplate, LogOut, HardDrive, Download } from 'lucide-react';
 import { useServiceDocumentStore } from '../../../frontend-state/serviceDocumentStore';
 import { useAppStore } from '../../../frontend-state/appStore';
+import { INSTALLED_KLOKS_SERVICES } from '../../../libraries/services/kloksImporter';
 
 export const KultToolbar: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const {
@@ -16,11 +17,13 @@ export const KultToolbar: React.FC<{ onLogout?: () => void }> = ({ onLogout }) =
     runService,
     isRunning,
     setActiveDockTab,
+    importExistingService,
   } = useServiceDocumentStore();
   const { activeWorkspace } = useAppStore();
+  const [showImportMenu, setShowImportMenu] = useState(false);
 
   return (
-    <header className="h-11 px-3 bg-[var(--skipo-surface)] border-b border-[var(--skipo-border-color)]/20 flex items-center justify-between font-mono text-xs select-none shrink-0">
+    <header className="h-11 px-3 bg-[var(--skipo-surface)] border-b border-[var(--skipo-border-color)]/20 flex items-center justify-between font-mono text-xs select-none shrink-0 relative">
       {/* Brand & Service Meta */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
@@ -39,6 +42,38 @@ export const KultToolbar: React.FC<{ onLogout?: () => void }> = ({ onLogout }) =
           <span className="text-[10px] text-[var(--skipo-accent)] px-1.5 py-0.5 rounded border border-[var(--skipo-accent)]/30">
             v{document.service.version}
           </span>
+        </div>
+
+        {/* Import Existing KLOKS Service Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowImportMenu((v) => !v)}
+            className="flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--skipo-bg)] border border-[var(--skipo-border-color)]/30 text-[10px] text-[var(--skipo-text)] hover:border-[var(--skipo-accent)]"
+          >
+            <Download size={10} />
+            <span>Open KLOKS</span>
+          </button>
+
+          {showImportMenu && (
+            <div className="absolute left-0 top-7 w-60 bg-[var(--skipo-bg)] border border-[var(--skipo-border-color)] rounded shadow-xl p-1.5 z-50 space-y-1">
+              <span className="text-[9px] uppercase font-bold text-[var(--skipo-text-muted)] block px-1.5 py-0.5">
+                Import Existing Service
+              </span>
+              {INSTALLED_KLOKS_SERVICES.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => {
+                    importExistingService(s.id);
+                    setShowImportMenu(false);
+                  }}
+                  className="w-full text-left px-2 py-1 rounded hover:bg-[var(--skipo-surface)] text-[10px] text-[var(--skipo-text)] flex items-center justify-between"
+                >
+                  <span className="truncate">{s.name}</span>
+                  <span className="text-[8px] text-[var(--skipo-accent)]">{s.operations[0]}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

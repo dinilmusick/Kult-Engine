@@ -1,12 +1,13 @@
 /**
  * @file NodeInspectorPanel.tsx
  * @description Node & Service Contract Inspector (§10 of IMPLEMENTATION-SPEC.md).
- * Displays typed port contracts, configuration inputs, and runtime probe values.
+ * Displays typed port contracts, configuration inputs, and runtime probe values with Monaco syntax highlighting.
  */
 
 import React from 'react';
-import { Sliders, Trash2, Cpu, ShieldCheck, Check, Sparkles } from 'lucide-react';
+import { Sliders, Trash2, Cpu, Sparkles } from 'lucide-react';
 import { useServiceDocumentStore } from '../../../frontend-state/serviceDocumentStore';
+import { MonacoCodeViewer } from '../common/MonacoCodeViewer';
 
 export const NodeInspectorPanel: React.FC = () => {
   const {
@@ -159,19 +160,22 @@ export const NodeInspectorPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Runtime Probe Result */}
+        {/* Runtime Probe Result with Monaco */}
         {nodeResult && (
-          <div className="p-2.5 rounded border border-[var(--skipo-success)]/30 bg-[var(--skipo-bg)]">
-            <div className="flex items-center justify-between text-[var(--skipo-success)] mb-1">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[var(--skipo-success)]">
               <span className="font-bold flex items-center gap-1">
                 <Sparkles size={11} />
                 <span>Captured Runtime Probe</span>
               </span>
               <span className="text-[9px]">{nodeResult.durationMs}ms</span>
             </div>
-            <pre className="text-[9px] text-[var(--skipo-text-muted)] overflow-x-auto p-1 bg-black/40 rounded max-h-28">
-              {JSON.stringify(nodeResult.outputValues, null, 2)}
-            </pre>
+            <div className="h-32">
+              <MonacoCodeViewer
+                value={JSON.stringify(nodeResult.outputValues, null, 2)}
+                language="json"
+              />
+            </div>
           </div>
         )}
       </div>

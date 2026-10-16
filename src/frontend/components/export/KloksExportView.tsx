@@ -1,7 +1,7 @@
 /**
  * @file KloksExportView.tsx
  * @description KLOKS Artifact Generator & Promotion Workflow (§19 & §20 of IMPLEMENTATION-SPEC.md).
- * Previews generated package files, manifests, diffs, and executes controlled promotion with zero false fallbacks.
+ * Previews generated package files, manifests, diffs with Monaco code highlighting.
  */
 
 import React, { useState } from 'react';
@@ -9,6 +9,7 @@ import { Package, FileCode, CheckCircle2, ArrowUpRight, Copy, AlertCircle, GitCo
 import { useServiceDocumentStore } from '../../../frontend-state/serviceDocumentStore';
 import { generateKloksArtifact } from '../../../libraries/services/kloksExporter';
 import { apiClient } from '../../../libraries/client/apiClient';
+import { MonacoCodeViewer } from '../common/MonacoCodeViewer';
 
 export const KloksExportView: React.FC = () => {
   const { document } = useServiceDocumentStore();
@@ -19,6 +20,13 @@ export const KloksExportView: React.FC = () => {
   const [promotionError, setPromotionError] = useState<string | null>(null);
 
   const activeFile = artifact.files.find((f) => f.path === selectedFilePath) || artifact.files[0];
+
+  const getLanguage = (path: string) => {
+    if (path.endsWith('.json')) return 'json';
+    if (path.endsWith('.ts')) return 'typescript';
+    if (path.endsWith('.js')) return 'javascript';
+    return 'plaintext';
+  };
 
   const handlePromote = async () => {
     setIsPromoting(true);
@@ -33,7 +41,6 @@ export const KloksExportView: React.FC = () => {
         setPromotionError(res?.error || 'Promotion rejected: Service document failed backend validation gates.');
       }
     } catch (err: any) {
-      // LAW: Failures MUST remain failures. Never disguise as success.
       setPromotionError(err?.message || 'Failed to connect to backend promotion facade.');
     } finally {
       setIsPromoting(false);
@@ -69,7 +76,7 @@ export const KloksExportView: React.FC = () => {
         {/* File tree */}
         <div className="p-2 bg-[var(--skipo-bg)] space-y-1 overflow-y-auto">
           <span className="text-[10px] uppercase font-bold text-[var(--skipo-text-muted)] block mb-1">
-            Generated Package Files ({artifact.files.length})
+            Package Files ({artifact.files.length})
           </span>
           {artifact.files.map((file) => {
             const active = activeFile?.path === file.path;
@@ -100,10 +107,10 @@ export const KloksExportView: React.FC = () => {
           </div>
         </div>
 
-        {/* File preview */}
+        {/* File preview with Monaco Editor */}
         <div className="md:col-span-3 p-3 bg-black/50 overflow-y-auto flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--skipo-border-color)]/20">
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--skipo-border-color)]/25 shrink-0">
               <span className="text-[11px] font-bold text-[var(--skipo-text)]">{activeFile?.path}</span>
               <button
                 onClick={() => navigator.clipboard?.writeText(activeFile?.content || '')}
@@ -113,23 +120,26 @@ export const KloksExportView: React.FC = () => {
                 <span>Copy</span>
               </button>
             </div>
-            <pre className="text-[11px] text-[var(--skipo-text)] font-mono overflow-x-auto whitespace-pre leading-relaxed">
-              {activeFile?.content}
-            </pre>
+            <div className="flex-1 min-h-[300px]">
+              <MonacoCodeViewer value={activeFile?.content || ''} language={getLanguage(activeFile?.path || '')} />
+            </div>
           </div>
 
-          {/* Promotion Notifications (Strict: No False Success) */}
-          {promotionResult && (
-            <div className="mt-3 p-2 rounded border border-[var(--skipo-success)]/40 bg-[var(--skipo-bg)] flex items-center gap-2 text-[var(--skipo-success)]">
-              <CheckCircle2 size={13} />
-              <span>{promotionResult}</span>
-            </div>
-          )}
-
-          {promotionError && (
-            <div className="mt-3 p-2 rounded border border-[var(--skipo-danger)]/40 bg-[var(--skipo-bg)] flex items-center gap-2 text-[var(--skipo-danger)]">
-              <AlertCircle size={13} />
-              <span>{promotionError}</span>
+          {/* Promotion Notifications */}
+          {(promotionResult || promotionError) && (
+            <div className="mt-3 shrink-0">
+              {promotionResult && (
+                <div className="p-2 rounded border border-[var(--skipo-success)]/40 bg-[var(--skipo-bg)] flex items-center gap-2 text-[var(--skipo-success)]">
+                  <CheckCircle2 size={13} />
+                  <span>{promotionResult}</span>
+                </div>
+              )}
+              {promotionError && (
+                <div className="p-2 rounded border border-[var(--skipo-danger)]/40 bg-[var(--skipo-bg)] flex items-center gap-2 text-[var(--skipo-danger)]">
+                  <AlertCircle size={13} />
+                  <span>{promotionError}</span>
+                </div>
+              )}
             </div>
           )}
         </div>

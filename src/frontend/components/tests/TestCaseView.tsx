@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Check, X, Plus, Play, Beaker, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useServiceDocumentStore } from '../../../frontend-state/serviceDocumentStore';
 import { runRoundTripTest, type RoundTripReport } from '../../../libraries/services/roundTripTester';
+import { MonacoCodeViewer } from '../common/MonacoCodeViewer';
 import type { ServiceTestCase } from '../../../libraries/types/serviceIR';
 
 export const TestCaseView: React.FC = () => {
@@ -105,9 +106,9 @@ export const TestCaseView: React.FC = () => {
       </div>
 
       {/* Test Detail Column */}
-      <div className="flex-1 p-3 overflow-y-auto bg-[var(--skipo-surface)] space-y-3">
+      <div className="flex-1 p-3 overflow-y-auto bg-[var(--skipo-surface)] space-y-3 flex flex-col">
         {roundTripReport && (
-          <div className="p-2.5 rounded border border-[var(--skipo-accent)]/40 bg-[var(--skipo-bg)] space-y-2">
+          <div className="p-2.5 rounded border border-[var(--skipo-accent)]/40 bg-[var(--skipo-bg)] space-y-2 shrink-0">
             <div className="flex items-center justify-between">
               <span className="font-bold text-[var(--skipo-text)] flex items-center gap-1.5">
                 <RefreshCw size={12} className="text-[var(--skipo-accent)]" />
@@ -132,8 +133,8 @@ export const TestCaseView: React.FC = () => {
         )}
 
         {activeTest && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[var(--skipo-border-color)]/20">
+          <div className="space-y-3 flex-1 flex flex-col">
+            <div className="flex items-center justify-between pb-2 border-b border-[var(--skipo-border-color)]/20 shrink-0">
               <div>
                 <span className="text-sm font-bold text-[var(--skipo-text)]">{activeTest.name}</span>
                 <span className="text-[10px] text-[var(--skipo-text-muted)] block font-mono">{activeTest.id}</span>
@@ -144,14 +145,24 @@ export const TestCaseView: React.FC = () => {
               </button>
             </div>
 
-            <div>
-              <span className="text-[10px] uppercase font-bold text-[var(--skipo-text)] block mb-1">Test Input Payload (JSON)</span>
-              <pre className="p-2 rounded bg-[var(--skipo-bg)] border border-[var(--skipo-border-color)]/20 text-[11px] text-[var(--skipo-text)]">
-                {JSON.stringify(activeTest.input, null, 2)}
-              </pre>
+            <div className="flex-1 flex flex-col min-h-[140px]">
+              <span className="text-[10px] uppercase font-bold text-[var(--skipo-text)] block mb-1 shrink-0">Test Input Payload (JSON)</span>
+              <div className="flex-1">
+                <MonacoCodeViewer value={JSON.stringify(activeTest.input, null, 2)} language="json" readOnly={false} onChange={(val) => {
+                  try {
+                    if (val) {
+                      const parsed = JSON.parse(val);
+                      activeTest.input = parsed;
+                      saveTestCase(activeTest);
+                    }
+                  } catch (e) {
+                    // Ignore parse errors during active typing
+                  }
+                }} />
+              </div>
             </div>
 
-            <div>
+            <div className="shrink-0 pt-2">
               <span className="text-[10px] uppercase font-bold text-[var(--skipo-text)] block mb-1">Assertions ({activeTest.assertions.length})</span>
               <div className="space-y-1">
                 {activeTest.assertions.map((ass, i) => (

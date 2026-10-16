@@ -90,4 +90,40 @@ export const apiClient = {
     const res = await wrappedFetch(`/api/commands/${jobId}/status`);
     return res.json();
   },
+
+  async validateService(document: any) {
+    const res = await wrappedFetch('/api/kult/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ document }),
+    });
+    return res.json();
+  },
+
+  async executeService(document: any, inputs: Record<string, unknown> = {}) {
+    const res = await wrappedFetch('/api/kult/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ document, inputs }),
+    });
+    return res.json();
+  },
+
+  async exportArtifact(document: any) {
+    const res = await wrappedFetch('/api/kult/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ document }),
+    });
+    return res.json();
+  },
+
+  async promoteService(document: any) {
+    const res = await wrappedFetch('/api/kult/promote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ document }),
+    });
+    return res.json();
+  },
 };

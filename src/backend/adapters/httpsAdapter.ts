@@ -153,10 +153,18 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     if (method === 'GET') return jsonRes(DepmBackend.services.routes.getAllRoutes());
     if (method === 'POST') return jsonRes(DepmBackend.services.routes.upsertRoute(await parseBody(request)));
   }
-  const execMatch = pathname.match(/^\/api\/apps\/([^/]+)\/executions$/);
-  if (execMatch) {
-    if (method === 'GET') return jsonRes(DepmBackend.services.routes.getExecutions(execMatch[1]));
-    if (method === 'POST') return jsonRes(DepmBackend.services.routes.recordExecution(execMatch[1], await parseBody(request)));
+  if (pathname === '/api/kult/validate' && method === 'POST') {
+    return jsonRes(DepmBackend.services.kult.validate((await parseBody(request)).document));
+  }
+  if (pathname === '/api/kult/execute' && method === 'POST') {
+    const b = await parseBody(request);
+    return jsonRes(await DepmBackend.services.kult.execute(b.document, b.inputs));
+  }
+  if (pathname === '/api/kult/export' && method === 'POST') {
+    return jsonRes(DepmBackend.services.kult.exportArtifact((await parseBody(request)).document));
+  }
+  if (pathname === '/api/kult/promote' && method === 'POST') {
+    return jsonRes(await DepmBackend.services.kult.promote((await parseBody(request)).document));
   }
 
   // 7. Assets fallback for Frontend SPA

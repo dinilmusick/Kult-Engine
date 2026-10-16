@@ -1,0 +1,10 @@
+{
+  "target": "fullstack",
+  "include": [
+    "frontend",
+    "backend",
+    "libraries",
+    "frontend-state"
+  ],
+  "exclude": []
+}

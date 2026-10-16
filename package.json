@@ -1,0 +1,47 @@
+{
+  "name": "my-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "skipo": {
+    "deploy": "fullstack"
+  },
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "node scripts/skipo-build.cjs",
+    "start": "node api/index.js",
+    "preview": "vite preview",
+    "clean": "rm -rf dist api",
+    "lint": "tsc --noEmit",
+    "validate": "python3 Skipo/checklists/full_system_validator.py .",
+    "validate:strict": "python3 Skipo/checklists/full_system_validator.py . --verbose"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1136.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-react": "^5.0.4",
+    "bcryptjs": "^3.0.3",
+    "bullmq": "^6.3.8",
+    "dotenv": "^17.2.3",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "tailwindcss": "^4.1.14",
+    "@xyflow/react": "^12.11.1",
+    "zod": "^3.23.8",
+    "zustand": "^5.0.15",
+    "@ultrst-armada/krnl": "^1.0.1",
+    "@ultrst-armada/kloks": "^1.4.2",
+    "@ultrst-armada/floks": "^1.2.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/node": "^22.14.0",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3"
+  }
+}

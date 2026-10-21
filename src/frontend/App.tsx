@@ -31,14 +31,9 @@ export function App() {
       .then((data: any) => {
         if (data && Array.isArray(data.workspaces)) {
           setWorkspaces(data.workspaces);
-          if (data.activeWorkspaceId) {
-            setActiveWorkspaceId(data.activeWorkspaceId);
-            const found = data.workspaces.find((w: any) => w.id === data.activeWorkspaceId);
-            if (found) {
-              setActiveWorkspace(found);
-              loadWorkspace(found.id);
-            }
-          }
+          // Do not auto-enter a workspace after login. Kult's first authenticated
+          // screen is always the explicit workspace tile menu; opening a workspace
+          // is a user action.
         }
       })
       .catch((error) => console.error("Failed to load workspaces", error));
@@ -117,7 +112,6 @@ export function App() {
   if (!activeWorkspaceId) {
     return (
       <WorkspaceGate
-        appName="Kult Engine"
         workspaces={workspaces}
         activeWorkspaceId={activeWorkspaceId}
         onSelectWorkspace={handleSelectWorkspace}

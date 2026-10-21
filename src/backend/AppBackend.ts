@@ -4,7 +4,6 @@
 
 import {
   AudioHardwareServiceFacade,
-  AudioMidiOrchestratorFacade,
   AuthServiceFacade,
 } from '@ultrst-armada/kloks';
 
@@ -13,13 +12,8 @@ export const services = {
   auth: AuthServiceFacade,
 };
 
-export const orchestrations = {
-  audioMidi: AudioMidiOrchestratorFacade,
-};
-
 export const AppBackend = {
   services,
-  orchestrations,
 };
 
 export default AppBackend;

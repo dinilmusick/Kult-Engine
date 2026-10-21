@@ -1,4 +1,5 @@
 import { queryUnifiedDb } from '@ultrst-armada/kloks/backend';
+import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
 
 export type WorkspaceStorageProvider = 'local_fs' | 'backblaze_b2';
@@ -15,13 +16,44 @@ function profiles(row: any): Record<string, any> {
   return row.app_profiles || {};
 }
 
+function systemDatabaseUrls(env: any): string[] {
+  const urls = [
+    env?.SYSTEM_DATABASE_URL_1,
+    env?.SYSTEM_DATABASE_URL_2,
+    env?.SYSTEM_DATABASE_URL_3,
+    env?.SYSTEM_DATABASE_URL,
+    env?.DATABASE_URL,
+  ];
+  return [...new Set(urls.map((value) => String(value || '').trim()).filter(Boolean))];
+}
+
 async function findUser(identifier: string, env: any) {
   const raw = String(identifier || '').trim();
   if (!raw) return null;
-  const byId = await queryUnifiedDb('SELECT * FROM "ultrst-users" WHERE id = $1 LIMIT 1', [raw], env);
-  if (byId.rows && byId.rows[0]) return byId.rows[0];
-  const byEmail = await queryUnifiedDb('SELECT * FROM "ultrst-users" WHERE LOWER(email) = LOWER($1) LIMIT 1', [raw], env);
-  return byEmail.rows && byEmail.rows[0] ? byEmail.rows[0] : null;
+
+  // Kult deployments use the numbered SYSTEM_DATABASE_URL_* control-plane
+  // variables. Query those directly first so authentication does not depend
+  // on a connector-specific environment-variable convention.
+  for (const url of systemDatabaseUrls(env)) {
+    try {
+      const sql = neon(url);
+      const rows = await sql`SELECT * FROM "ultrst-users"
+        WHERE id = ${raw} OR LOWER(email) = LOWER(${raw})
+        LIMIT 1`;
+      if (rows[0]) return rows[0];
+    } catch {
+      // Try the next configured system database before falling back.
+    }
+  }
+
+  try {
+    const byId = await queryUnifiedDb('SELECT * FROM "ultrst-users" WHERE id = $1 LIMIT 1', [raw], env);
+    if (byId.rows && byId.rows[0]) return byId.rows[0];
+    const byEmail = await queryUnifiedDb('SELECT * FROM "ultrst-users" WHERE LOWER(email) = LOWER($1) LIMIT 1', [raw], env);
+    return byEmail.rows && byEmail.rows[0] ? byEmail.rows[0] : null;
+  } catch {
+    return null;
+  }
 }
 
 function safeUser(row: any) {
@@ -36,6 +68,8 @@ function passwordMatches(password: string, row: any) {
   if (/^\\$2[aby]?\\$/.test(String(stored))) return bcrypt.compareSync(password, String(stored));
   return String(stored) === password;
 }
+
+export { systemDatabaseUrls };
 
 export async function loginUser(identifier: string, password: string, env: any = {}) {
   if (!String(identifier || '').trim()) return { success: false, status: 400, error: 'Email address or username is required.' };

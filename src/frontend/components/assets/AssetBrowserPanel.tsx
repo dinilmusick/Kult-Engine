@@ -5,9 +5,11 @@
  */
 
 import React, { useState } from 'react';
-import { Search, Plus, Layers, Sparkles, Box, Shield, Activity, Download } from 'lucide-react';
+import { Search, Plus, Layers, Sparkles, Box, Shield, Activity, Download, MoreVertical } from 'lucide-react';
 import { searchAssets, type DiscoveredAsset } from '../../../libraries/services/assetDiscovery';
 import { useServiceDocumentStore } from '../../../frontend-state/serviceDocumentStore';
+import { apiClient } from '../../../libraries/client/apiClient';
+import { useAppStore } from '../../../frontend-state/appStore';
 
 
 const CATEGORIES = [
@@ -23,6 +25,7 @@ export const AssetBrowserPanel: React.FC = () => {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const { addNodeFromAsset, document } = useServiceDocumentStore();
+  const { user } = useAppStore();
   const assets = searchAssets(query, selectedCategory);
   const kloks = assets.filter((asset) => asset.category === 'services' && asset.package === '@ultrst-armada/kloks');
   const local = document.service.id.startsWith('local.') ? [document.service] : [];
@@ -46,7 +49,7 @@ export const AssetBrowserPanel: React.FC = () => {
         <button onClick={() => handleAddAsset(asset)} className="mt-2 w-full py-1 rounded bg-[var(--skipo-surface-hover)] text-[10px] font-bold">Open locally</button>
       )}
       {viewOnly && (
-        <button onContextMenu={(e) => { e.preventDefault(); handleAddAsset(asset); }} onClick={() => handleAddAsset(asset)}
+        <button onContextMenu={async (e) => { e.preventDefault(); if (user?.id) await apiClient.copyKloksServiceLocally(asset.export, user.id); handleAddAsset(asset); }} onClick={() => handleAddAsset(asset)}
           className="mt-1 w-full py-1 rounded border border-[var(--skipo-border-color)]/30 text-[10px]">
           Edit this service locally
         </button>

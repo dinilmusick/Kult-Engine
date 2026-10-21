@@ -35,7 +35,8 @@
     "react-dom": "^19.0.1",
     "tailwindcss": "^4.1.14",
     "zod": "^3.23.8",
-    "zustand": "^5.0.15"
+    "zustand": "^5.0.15",
+    "@webcontainer/api": "^1.6.4"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",

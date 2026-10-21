@@ -5,9 +5,9 @@
 // @skipo:section Storage.ui.TilesSection
 // @skipo:component WorkspaceTilesMenu
 // @skipo:origin GENERATED
-import React from 'react';
-import { WorkspaceTilesMenu, type WorkspaceRecord } from '@ultrst-armada/floks/ui';
-import { apiClient } from '../../libraries/client/apiClient';
+import React from "react";
+import { WorkspaceTilesMenu, type WorkspaceRecord } from "@ultrst-armada/floks/ui";
+import { apiClient } from "../../libraries/client/apiClient";
 
 export interface WorkspaceGateProps {
   workspaces: WorkspaceRecord[];
@@ -26,23 +26,24 @@ export const WorkspaceGate: React.FC<WorkspaceGateProps> = ({
   onCreateWorkspace,
   onDeleteWorkspace,
   onLogout,
-  appName = 'SKIPO APP',
+  appName = "SKIPO APP",
 }) => {
   return (
     <WorkspaceTilesMenu
       workspaces={workspaces}
       activeWorkspaceId={activeWorkspaceId}
       onSelectWorkspace={onSelectWorkspace}
-      onCreateWorkspace={async (input) => {
+      onCreateWorkspace={async (input: any) => {
         if (onCreateWorkspace) {
           await onCreateWorkspace(input);
         } else {
-          await apiClient.createWorkspace('system', input as Record<string, unknown>);
+          await apiClient.createWorkspace("system", input);
         }
       }}
       onDeleteWorkspace={onDeleteWorkspace}
       onLogout={onLogout}
-      mode="working-workspace"
+      userId="system"
+      storageService={apiClient as any}
     />
   );
 };

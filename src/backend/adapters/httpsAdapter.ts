@@ -60,12 +60,12 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   if (pathname === '/api/auth/login' && method === 'POST') {
     const b = await parseBody(request);
     const res = await DepmBackend.services.auth.loginUser(b.email || b.identifier, b.password, false, env);
-    return jsonRes(res, res.status);
+    return jsonRes(res, (res as any).status || 200);
   }
   if (pathname === '/api/auth/admin/login' && method === 'POST') {
     const b = await parseBody(request);
     const res = await DepmBackend.services.auth.loginUser(b.email || b.identifier, b.password, true, env);
-    return jsonRes(res, res.status);
+    return jsonRes(res, (res as any).status || 200);
   }
   if (pathname === '/api/auth/users' && method === 'GET') {
     return jsonRes(await DepmBackend.services.auth.getUsers(env));
@@ -151,7 +151,7 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   if (pathname === '/api/public/routes' && method === 'GET') return jsonRes(DepmBackend.services.routes.getPublicRoutes());
   if (pathname.startsWith('/api/public/routes/')) {
     const res = DepmBackend.services.routes.getPublicRouteByPath(pathname.replace('/api/public/routes/', ''));
-    return jsonRes(res, res.status);
+    return jsonRes(res, (res as any).status || 200);
   }
   if (pathname === '/api/gateway/config' && method === 'GET') return jsonRes(DepmBackend.services.routes.getGatewayConfig(env));
   if (pathname === '/api/routes') {

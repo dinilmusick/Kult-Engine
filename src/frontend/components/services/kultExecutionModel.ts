@@ -23,6 +23,8 @@ export interface GeneratedExecutionProject {
   command: string[];
 }
 
+export const KULT_EXECUTION_RESULT_MARKER = '__KULT_EXECUTION_RESULT__';
+
 function safeSegment(value: string): string {
   return value.replace(/[^a-zA-Z0-9_-]/g, '_');
 }
@@ -46,39 +48,58 @@ function buildRunnerSource(functionalityFiles: Array<{ id: string; path: string 
   const names = functionalityFiles.map((_, index) => 'main' + index).join(', ');
   const ids = JSON.stringify(functionalityFiles.map(item => item.id));
 
-  return "import { readFile } from 'node:fs/promises';\n" +
-    imports + "\n\n" +
-    "const input = JSON.parse(process.env.KULT_TEST_INPUT || '{}');\n" +
-    "const mode = process.env.KULT_TEST_MODE || 'functionality';\n" +
-    "const target = process.env.KULT_TARGET || '0';\n" +
-    "const orchestrationIds = JSON.parse(process.env.KULT_ORCHESTRATION_IDS || '[]');\n\n" +
-    "async function run() {\n" +
-    "  const functions = [" + names + "];\n" +
-    "  if (mode === 'functionality') {\n" +
-    "    const index = Number(target);\n" +
-    "    const fn = functions[index];\n" +
-    "    if (typeof fn !== 'function') throw new Error('Functionality target not found: ' + target);\n" +
-    "    const started = Date.now();\n" +
-    "    const output = await fn(input, {});\n" +
-    "    process.stdout.write(JSON.stringify({ ok: true, output, durationMs: Date.now() - started }));\n" +
-    "    return;\n" +
-    "  }\n" +
-    "  if (mode !== 'service') throw new Error('Unsupported execution mode: ' + mode);\n" +
-    "  const idList = " + ids + ";\n" +
-    "  let value = input;\n" +
-    "  const started = Date.now();\n" +
-    "  for (const id of orchestrationIds) {\n" +
-    "    const index = idList.indexOf(id);\n" +
-    "    const fn = functions[index];\n" +
-    "    if (typeof fn !== 'function') throw new Error('Orchestration functionality not found: ' + id);\n" +
-    "    value = await fn(value, {});\n" +
-    "  }\n" +
-    "  process.stdout.write(JSON.stringify({ ok: true, output: value, durationMs: Date.now() - started }));\n" +
-    "}\n" +
-    "run().catch(error => {\n" +
-    "  process.stdout.write(JSON.stringify({ ok: false, error: error instanceof Error ? error.stack || error.message : String(error) }));\n" +
-    "  process.exitCode = 1;\n" +
-    "});\n";
+  return [
+    imports,
+    '',
+    "const input = JSON.parse(process.env.KULT_TEST_INPUT || '{}');",
+    "const mode = process.env.KULT_TEST_MODE || 'functionality';",
+    "const target = process.env.KULT_TARGET || '0';",
+    "const functionalityIds = JSON.parse(process.env.KULT_FUNCTIONALITY_IDS || '[]');",
+    "const resultMarker = " + JSON.stringify(KULT_EXECUTION_RESULT_MARKER) + ";",
+    '',
+    'function emitResult(value) {',
+    '  process.stdout.write(resultMarker + JSON.stringify(value) + "\\n");',
+    '}',
+    '',
+    'async function run() {',
+    '  const functions = [' + names + '];',
+    '  const createState = () => ({',
+    '    data: {},',
+    '    helpers: {},',
+    '    events: {},',
+    '    libraries: {},',
+    '  });',
+    '',
+    "  if (mode === 'functionality') {",
+    '    const index = Number(target);',
+    "    const fn = functions[index];",
+    "    if (typeof fn !== 'function') throw new Error('Functionality target not found: ' + target);",
+    '    const started = Date.now();',
+    '    const state = createState();',
+    '    const output = await fn(input, state);',
+    '    emitResult({ ok: true, output, durationMs: Date.now() - started });',
+    '    return;',
+    '  }',
+    '',
+    "  if (mode !== 'service') throw new Error('Unsupported execution mode: ' + mode);",
+    '  const idList = ' + ids + ';',
+    '  let value = input;',
+    '  const started = Date.now();',
+    '  for (const id of functionalityIds) {',
+    '    const index = idList.indexOf(id);',
+    '    const fn = functions[index];',
+    "    if (typeof fn !== 'function') throw new Error('Orchestration functionality not found: ' + id);",
+    '    value = await fn(value, createState());',
+    '  }',
+    '  emitResult({ ok: true, output: value, durationMs: Date.now() - started });',
+    '}',
+    '',
+    'run().catch(error => {',
+    "  emitResult({ ok: false, error: error instanceof Error ? error.stack || error.message : String(error) });",
+    '  process.exitCode = 1;',
+    '});',
+    '',
+  ].join('\n');
 }
 
 export function buildExecutionProject(
@@ -88,14 +109,16 @@ export function buildExecutionProject(
 ): GeneratedExecutionProject {
   const files: Record<string, { file: { contents: string } }> = {};
   const functionalityFiles = functionalities.map((asset) => {
-    const path = "functionalities/" + safeSegment(asset.id) + ".ts";
+    const path = 'functionalities/' + safeSegment(asset.id) + '.ts';
     files[path] = { file: { contents: buildFunctionalitySource(asset) } };
     return { id: asset.id, path };
   });
 
+  // Install every registered functionality dependency. GutTS is intentionally
+  // included: functionality source is allowed to import it directly.
   const dependencies = Object.fromEntries(
     [...new Set(functionalities.flatMap(asset => asset.libraries))]
-      .filter(name => name && name !== '@ultrst-armada/gutts')
+      .filter(Boolean)
       .map(name => [name, 'latest']),
   );
 
@@ -118,6 +141,16 @@ export function buildExecutionProject(
 }
 
 export function parseExecutionResult(raw: string): { ok: boolean; output?: unknown; error?: string; durationMs?: number } {
+  const markerIndex = raw.lastIndexOf(KULT_EXECUTION_RESULT_MARKER);
+  if (markerIndex >= 0) {
+    const payload = raw.slice(markerIndex + KULT_EXECUTION_RESULT_MARKER.length).trim();
+    try {
+      return JSON.parse(payload);
+    } catch {
+      return { ok: false, error: payload || 'Malformed structured execution result.' };
+    }
+  }
+
   const trimmed = raw.trim();
   try {
     return JSON.parse(trimmed);

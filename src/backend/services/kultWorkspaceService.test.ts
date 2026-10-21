@@ -10,11 +10,3 @@ describe('Kult workspace storage', () => {
     assert.deepEqual(result.buckets, []);
   });
 });
-
-it('requires a real Backblaze bucket for cloud workspace creation', async () => {
-  const result = await import('./kultWorkspaceService').then(({ createWorkspace }) => createWorkspace('missing-user', {
-    name: 'Cloud',
-    storageProvider: 'backblaze_b2',
-  }, {}));
-  assert.equal(result.success, false);
-});

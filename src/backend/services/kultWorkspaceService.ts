@@ -61,7 +61,8 @@ async function saveWorkspaces(row: any, workspaces: KultWorkspace[], env: any) {
 }
 
 function normalize(input: any, existing?: KultWorkspace): KultWorkspace {
-  const provider: WorkspaceStorageProvider = input.storageProvider === 'backblaze_b2' ? 'backblaze_b2' : 'local_fs';
+  const requestedProvider = input.storageProvider || input.storageConfig?.provider;
+  const provider: WorkspaceStorageProvider = requestedProvider === 'backblaze_b2' || requestedProvider === 'backblaze' ? 'backblaze_b2' : 'local_fs';
   const id = existing?.id || input.id || ('ws_' + Date.now().toString(36));
   return { id, name: String(input.name || existing?.name || 'New Workspace').trim(), description: input.description ?? existing?.description,
     engine: provider === 'backblaze_b2' ? 'object_storage' : 'local_fs', workspacePath: input.workspacePath || existing?.workspacePath || ('data/workspaces/' + id),
@@ -83,8 +84,8 @@ export async function createWorkspace(identifier: string, input: any = {}, env: 
   if (!row) return { success: false, status: 404, error: 'User not found.' };
   const provider = input.storageProvider || input.storageConfig?.provider;
   const bucket = input.b2BucketName || input.storageConfig?.bucketName;
-  if (provider === 'backblaze_b2' && !bucket) return { success: false, status: 400, error: 'A Backblaze B2 bucket must be selected.' };
-  if (provider === 'backblaze_b2') input = { ...input, storageProvider: 'backblaze_b2', b2BucketName: bucket, storageConnectionId: input.storageConnectionId || input.storageConfig?.connectionId };
+  if ((provider === 'backblaze_b2' || provider === 'backblaze') && !bucket) return { success: false, status: 400, error: 'A Backblaze B2 bucket must be selected.' };
+  if (provider === 'backblaze_b2' || provider === 'backblaze') input = { ...input, storageProvider: 'backblaze_b2', b2BucketName: bucket, storageConnectionId: input.storageConnectionId || input.storageConfig?.connectionId };
   const workspace = normalize(input); const workspaces = await saveWorkspaces(row, [...workspaceList(row), workspace], env);
   return { success: true, status: 201, workspace, workspaces };
 }

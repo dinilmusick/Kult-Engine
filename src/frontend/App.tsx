@@ -70,13 +70,28 @@ export function App() {
       const res = await apiClient.createWorkspace(userId, input);
       const created = res.workspace || { id: `ws-${Date.now()}`, name: input.name, workspacePath: input.workspacePath || "/workspace" };
       setWorkspaces((prev) => [...prev, created]);
-      setActiveWorkspaceId(created.id);
-      setActiveWorkspace(created);
-      await loadWorkspace(created.id);
-      setShowServices(true);
+      // Workspace creation does not enter the workspace. The user must explicitly select it.
+      setActiveWorkspaceId(null);
+      setActiveWorkspace(null);
+      setShowServices(false);
     } catch (error) {
       console.error("Failed to create workspace", error);
       throw error;
+    }
+  };
+
+  const handleCopyKloksService = async (service: { id: string }) => {
+    const result = await apiClient.copyKloksServiceLocally(service.id, userId || "");
+    if (!result?.success || !result?.service) throw new Error(result?.error || "Unable to copy KLOKS service.");
+    const next = result.service as LocalServiceRecord;
+    setLocalServices((prev) => prev.some((item) => item.id === next.id) ? prev : [...prev, next]);
+    if (activeWorkspaceId) {
+      const merged = localServices.some((item) => item.id === next.id) ? localServices : [...localServices, next];
+      await fetch("/api/db/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
+        body: JSON.stringify({ workspaceId: activeWorkspaceId, services: merged }),
+      });
     }
   };
 
@@ -120,10 +135,14 @@ export function App() {
         onSelectWorkspace={handleSelectWorkspace}
         onCreateWorkspace={handleCreateWorkspace}
         onDeleteWorkspace={handleDeleteWorkspace}
+        userId={userId}
         onLogout={() => {
           setToken(null);
           setUserId(null);
           setActiveWorkspaceId(null);
+          setActiveWorkspace(null);
+          setShowServices(false);
+          setLocalServices([]);
           localStorage.removeItem("kultAuthToken");
           localStorage.removeItem("kultUserId");
         }}
@@ -140,30 +159,28 @@ export function App() {
           setActiveWorkspaceId(null);
           setActiveWorkspace(null);
         }}
+        onCopyLocal={handleCopyKloksService}
         onCreate={() => {
           const document = {
             ...STARTER_SERVICES[0],
-            service: {
-              ...STARTER_SERVICES[0].service,
-              id: "local." + Date.now().toString(36),
-              name: "New Local Service",
-              description: ""
-            },
-            nodes: [],
-            edges: [],
-            assets: [],
-            tests: [],
-            metadata: { author: userId || "local" }
+            service: { ...STARTER_SERVICES[0].service, id: "local." + Date.now().toString(36), name: "New Local Service", description: "" },
+            nodes: [], edges: [], assets: [], tests: [],
+            metadata: { author: userId || "local", libraries: ["@ultrst-armada/gutts"], functionalities: [], orchestrations: [] }
           };
-          setLocalServices(prev => [
-            ...prev,
-            {
-              id: document.service.id,
-              folder: document.service.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-              document,
-              updatedAt: new Date().toISOString()
-            }
-          ]);
+          const created: LocalServiceRecord = {
+            id: document.service.id,
+            folder: document.service.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            document,
+            updatedAt: new Date().toISOString()
+          };
+          setLocalServices(prev => [...prev, created]);
+          if (activeWorkspaceId) {
+            void fetch("/api/db/workspace", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
+              body: JSON.stringify({ workspaceId: activeWorkspaceId, services: [...localServices, created] })
+            });
+          }
         }}
         onSave={handleSaveLocalService}
         userId={userId}

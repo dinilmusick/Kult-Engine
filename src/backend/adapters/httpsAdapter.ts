@@ -7,6 +7,7 @@
 import { DepmBackend } from '../DepmBackend';
 import { adaptNodeRequest } from './nodeBridge';
 import { handleVaultRoutes } from './vaultRoutes';
+import { createLocalServiceFromKloksAsset, getKloksServiceAsset } from '../../libraries/services/assetDiscovery';
 
 export interface Env {
   ENVIRONMENT?: string;
@@ -106,6 +107,9 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   }
 
   // 2.5 SRKL Backblaze federation used by workspace creation
+  if (pathname === '/api/srkl/backblaze/accounts' && method === 'GET') {
+    return jsonRes(await DepmBackend.services.srkl.getSrklAccounts(getUserId(request, url), 'backblaze', env));
+  }
   if (pathname === '/api/srkl/backblaze/buckets' && method === 'POST') {
     return jsonRes(await DepmBackend.services.srkl.listBackblazeBuckets(await parseBody(request)));
   }
@@ -173,11 +177,13 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   }
   if (pathname === '/api/kult/kloks/services' && method === 'GET') {
     const { discoverKloksAssets } = await import('../../libraries/services/assetDiscovery');
-    return jsonRes({ success: true, services: discoverKloksAssets().filter((a: any) => a.category === 'services') });
+    return jsonRes({ success: true, services: discoverKloksAssets().filter((a: any) => a.category === 'services').map((a: any) => ({ ...a, id: encodeURIComponent(a.export) })) });
   }
   const copyMatch = pathname.match(/^\/api\/kult\/kloks\/services\/([^/]+)\/copy$/);
   if (copyMatch && method === 'POST') {
-    return jsonRes({ success: false, status: 501, error: 'KLOKS local copy requires repository materialization; use the authenticated promotion/import workflow.' }, 501);
+    const asset = getKloksServiceAsset(copyMatch[1]);
+    if (!asset) return jsonRes({ success: false, status: 404, error: 'KLOKS service not found.' }, 404);
+    return jsonRes({ success: true, service: createLocalServiceFromKloksAsset(asset) });
   }
 
   if (pathname === '/api/kult/validate' && method === 'POST') {

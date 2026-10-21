@@ -201,3 +201,56 @@ export function searchAssets(query: string, category?: string): DiscoveredAsset[
     return matchesCat && matchesQuery;
   });
 }
+
+
+export function getKloksServiceAsset(serviceId: string): DiscoveredAsset | undefined {
+  const decoded = decodeURIComponent(serviceId);
+  return discoverKloksAssets().find((asset) => asset.export === decoded || asset.name === decoded);
+}
+
+export function createLocalServiceFromKloksAsset(asset: DiscoveredAsset) {
+  const nodeId = "kloks-" + asset.export.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+  const document = {
+    schemaVersion: "1.0.0",
+    service: {
+      id: "local.kloks." + asset.export.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase(),
+      name: asset.name,
+      version: asset.version,
+      description: asset.description,
+      entryNodeId: nodeId,
+      inputPorts: asset.inputPorts,
+      outputPorts: asset.outputPorts,
+    },
+    nodes: [{
+      id: nodeId,
+      kind: asset.kind,
+      type: asset.export,
+      version: asset.version,
+      position: { x: 240, y: 160 },
+      config: { ...asset.defaultConfig },
+      inputs: asset.inputPorts,
+      outputs: asset.outputPorts,
+      metadata: { source: "KLOKS", package: asset.package, export: asset.export },
+    }],
+    edges: [],
+    assets: [{
+      package: asset.package,
+      export: asset.export,
+      version: asset.version,
+      source: asset.source,
+      contractFingerprint: asset.contractFingerprint,
+      category: asset.category,
+    }],
+    tests: [],
+    metadata: {
+      author: "Kult",
+      provenance: { source: "KLOKS", package: asset.package, export: asset.export, copiedAt: new Date().toISOString() },
+    },
+  };
+  return {
+    id: document.service.id,
+    folder: document.service.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    document,
+    updatedAt: new Date().toISOString(),
+  };
+}

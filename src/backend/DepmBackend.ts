@@ -9,6 +9,15 @@ import { validateServiceDocument } from "../libraries/services/graphValidator";
 import { generateKloksArtifact } from "../libraries/services/kloksExporter";
 import { STARTER_SERVICES } from "../libraries/services/starterServices";
 import type { ServiceDocument } from "../libraries/types/serviceIR";
+import {
+  loginUser as loginKultUser,
+  getWorkspaces as getKultWorkspaces,
+  createWorkspace as createKultWorkspace,
+  updateWorkspace as updateKultWorkspace,
+  deleteWorkspace as deleteKultWorkspace,
+  getSrklBackblazeAccounts,
+  listBackblazeBuckets as listKultBackblazeBuckets,
+} from "./services/kultWorkspaceService";
 
 const userStore = new Map<string, { id: string; email: string; name: string; role: string }>([
   ["sys_admin", { id: "sys_admin", email: "admin@kult.org", name: "Kult System", role: "admin" }],
@@ -41,7 +50,7 @@ function toLocalServiceRecord(document: any) {
 export const DepmBackend = {
   services: {
     auth: {
-      async loginUser(email = "", password = "", _isAdmin = false, env: any = {}) { return doLoginUser(email, password, env); },
+      async loginUser(email = "", password = "", _isAdmin = false, env: any = {}) { return loginKultUser(email, password, env); },
       async getUsers(env: any = {}) {
         try {
           const result = await doQueryDb("SELECT id, email, username, name, role, email_verified, trust_level, status FROM \"ultrst-users\" ORDER BY email", [], env);
@@ -51,31 +60,10 @@ export const DepmBackend = {
     },
 
     workspace: {
-      async getWorkspaces(userId = "sys_admin", _env: any = {}) {
-        const list = workspaceStore.get(userId) || [
-          { id: "ws-kult-main", name: "Kult Main Workspace", storageProvider: "in-memory", workspacePath: "/workspaces/kult-main" },
-        ];
-        return { success: true, workspaces: list, activeWorkspaceId: list[0]?.id || "ws-kult-main" };
-      },
-      async createWorkspace(userId = "sys_admin", data: any = {}, _env: any = {}) {
-        const id = `ws-${Date.now().toString(36)}`;
-        const ws = { id, name: data.name || "New Workspace", storageProvider: data.storageProvider || "local", storageConfig: data.storageConfig || null, workspacePath: `/workspaces/${id}` };
-        const list = workspaceStore.get(userId) || [];
-        list.push(ws);
-        workspaceStore.set(userId, list);
-        return { success: true, workspace: ws };
-      },
-      async updateWorkspace(userId = "sys_admin", data: any = {}, _env: any = {}) {
-        const list = workspaceStore.get(userId) || [];
-        const idx = list.findIndex((w) => w.id === data.id);
-        if (idx >= 0) list[idx] = { ...list[idx], ...data };
-        return { success: true, workspace: list[idx] };
-      },
-      async deleteWorkspace(userId = "sys_admin", id = "", _env: any = {}) {
-        const list = (workspaceStore.get(userId) || []).filter((w) => w.id !== id);
-        workspaceStore.set(userId, list);
-        return { success: true };
-      },
+      async getWorkspaces(userId = "sys_admin", env: any = {}) { return getKultWorkspaces(userId, env); },
+      async createWorkspace(userId = "sys_admin", data: any = {}, env: any = {}) { return createKultWorkspace(userId, data, env); },
+      async updateWorkspace(userId = "sys_admin", data: any = {}, env: any = {}) { return updateKultWorkspace(userId, data, env); },
+      async deleteWorkspace(userId = "sys_admin", id = "", env: any = {}) { return deleteKultWorkspace(userId, id, env); },
       async getWorkspaceStorageDetails(id: string, _env: any = {}) {
         return { success: true, workspaceId: id, provider: "in-memory", status: "connected" };
       },
@@ -108,8 +96,8 @@ export const DepmBackend = {
     },
 
     srkl: {
-      async getSrklAccounts(_userId = "sys_admin", _service = "", _env: any = {}) { return { success: true, accounts: [] }; },
-      async listBackblazeBuckets(input: any = {}) { return doListBuckets(input); },
+      async getSrklAccounts(userId = "sys_admin", _service = "", env: any = {}) { return getSrklBackblazeAccounts(userId, env); },
+      async listBackblazeBuckets(input: any = {}) { return listKultBackblazeBuckets(input); },
       async getSrklStatus(_env: any = {}) { return { success: true, status: "operational", timestamp: new Date().toISOString() }; },
       async syncSrklAccountsToWorkspace(_wsId: string, _userId: string, _vaultKey: string, _env: any = {}) { return { success: true, count: 0 }; },
       async getWorkspaceAccounts(_wsId: string, _userId: string, _vaultKey: string, _env: any = {}, _inc?: boolean) { return { success: true, accounts: [] }; },

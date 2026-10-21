@@ -12,8 +12,9 @@ export const ServicesWorkspace: React.FC<{
   onSave: (s: LocalServiceRecord) => void;
   onCreate: () => void;
   onBack: () => void;
+  onCopyLocal?: (service: CloudService) => Promise<void> | void;
   userId?: string | null;
-}> = ({ services, onSave, onCreate, onBack, userId }) => {
+}> = ({ services, onSave, onCreate, onBack, onCopyLocal, userId }) => {
   const [view, setView] = React.useState<View>("chooser");
   const [editor, setEditor] = React.useState<LocalServiceRecord | null>(null);
   const [cloudServices, setCloudServices] = React.useState<CloudService[]>([]);
@@ -74,7 +75,7 @@ export const ServicesWorkspace: React.FC<{
                   <div className="text-[9px] mt-3 text-[var(--skipo-text-muted)]">{service.version ? `v${service.version}` : "Canonical KLOKS asset"}</div>
                   <div className="mt-4 flex gap-2">
                     <button disabled className="flex items-center gap-1 px-2 py-1 rounded border text-[9px] opacity-60"><Eye size={11}/> View only</button>
-                    <button disabled={Boolean(userId) === false} onClick={() => void apiClient.copyKloksServiceLocally(service.id, userId || "")} className="flex items-center gap-1 px-2 py-1 rounded bg-[var(--skipo-accent)] text-black text-[9px] font-bold"><Copy size={11}/> Copy locally</button>
+                    <button disabled={Boolean(userId) === false} onClick={() => void (onCopyLocal ? onCopyLocal(service) : apiClient.copyKloksServiceLocally(service.id, userId || ""))} className="flex items-center gap-1 px-2 py-1 rounded bg-[var(--skipo-accent)] text-black text-[9px] font-bold"><Copy size={11}/> Copy locally</button>
                   </div>
                 </article>
               ))}

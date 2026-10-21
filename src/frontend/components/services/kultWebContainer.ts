@@ -55,8 +55,7 @@ export async function runInWebContainer(
       installExitCode,
       exitCode: installExitCode,
       output: installOutput,
-      result: { ok: false, error: 'Dependency installation failed.
-' + installOutput },
+      result: { ok: false, error: 'Dependency installation failed.\\n' + installOutput },
     };
   }
 

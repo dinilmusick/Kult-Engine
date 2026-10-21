@@ -15,9 +15,9 @@ export const ServiceEditor: React.FC<{
   onSave: (service: LocalServiceRecord) => void;
 }> = ({ service, onBack, onSave }) => {
   const [doc, setDoc] = React.useState<ServiceDocument>(service.document);
-  const [libraries, setLibraries] = React.useState<string[]>(['@ultrst-armada/gutts']);
-  const [functionality, setFunctionality] = React.useState<Functionality[]>([]);
-  const [orchestrations, setOrchestrations] = React.useState<Orchestration[]>([]);
+  const [libraries, setLibraries] = React.useState<string[]>(Array.isArray(service.document.metadata?.libraries) ? service.document.metadata.libraries as string[] : ['@ultrst-armada/gutts']);
+  const [functionality, setFunctionality] = React.useState<Functionality[]>(Array.isArray(service.document.metadata?.functionalities) ? service.document.metadata.functionalities as Functionality[] : []);
+  const [orchestrations, setOrchestrations] = React.useState<Orchestration[]>(Array.isArray(service.document.metadata?.orchestrations) ? service.document.metadata.orchestrations as Orchestration[] : []);
   const [showFunctionDialog, setShowFunctionDialog] = React.useState(false);
   const [showOrchestrationDialog, setShowOrchestrationDialog] = React.useState(false);
   const [npmQuery, setNpmQuery] = React.useState('');
@@ -41,7 +41,7 @@ export const ServiceEditor: React.FC<{
   return <div className="h-full w-full bg-[var(--skipo-bg)] text-[var(--skipo-text)] flex flex-col">
     <header className="h-12 shrink-0 border-b border-[var(--skipo-border-color)]/30 flex items-center justify-between px-4 bg-[var(--skipo-surface)]">
       <div className="flex items-center gap-3"><button onClick={onBack} className="p-1.5 rounded hover:bg-[var(--skipo-bg)]"><ArrowLeft size={15}/></button><div><div className="font-black">{doc.service.name}</div><div className="text-[9px] text-[var(--skipo-text-muted)]">{service.folder}/</div></div></div>
-      <button onClick={() => onSave({...service, document: doc, updatedAt: new Date().toISOString()})} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs"><Save size={13}/> Save</button>
+      <button onClick={() => onSave({...service, document: { ...doc, metadata: { ...doc.metadata, libraries, functionalities: functionality, orchestrations } }, updatedAt: new Date().toISOString()})} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs"><Save size={13}/> Save</button>
     </header>
     <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-[var(--skipo-border-color)]/20 overflow-hidden">
       <section className="overflow-auto p-4 bg-[var(--skipo-bg)]">

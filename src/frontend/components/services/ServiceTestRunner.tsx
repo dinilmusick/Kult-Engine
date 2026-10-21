@@ -41,7 +41,7 @@ export const ServiceTestRunner: React.FC<{
         parsed,
         targetIndex,
         mode === 'service'
-          ? { mode, orchestrationIds: selectedOrchestration?.functionalityIds || [] }
+          ? { mode, functionalityIds: selectedOrchestration?.functionalityIds || [] }
           : { mode },
       );
       setLogs(execution.output);

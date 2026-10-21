@@ -205,7 +205,12 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   // to serve index.html for any non-file path. Manual /index.html rewrites cause
   // infinite redirect loops (CF Assets normalizes /index.html → / automatically).
   if (env.ASSETS && typeof env.ASSETS.fetch === 'function' && !pathname.startsWith('/api/')) {
-    return await env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+    const headers = new Headers(response.headers);
+    headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+    headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+    headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   }
 
   return jsonRes({ error: 'Not Found', path: pathname }, 404);

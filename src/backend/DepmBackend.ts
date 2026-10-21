@@ -25,13 +25,12 @@ const workspaceDataStore = new Map<string, any>();
 export const DepmBackend = {
   services: {
     auth: {
-      async loginUser(email = 'admin@kult.org', _pw = '', _isAdmin = false, _env: any = {}) {
-        const user = { id: 'sys_admin', email, name: email.split('@')[0] || 'Kult Author', role: 'admin' };
-        userStore.set(user.id, user);
-        return { success: true, status: 200, user, token: `sess::${user.id}::${Date.now()}` };
-      },
-      async getUsers(_env: any = {}) {
-        return { success: true, users: Array.from(userStore.values()) };
+      async loginUser(email = '', password = '', _isAdmin = false, env: any = {}) { return loginUser(email, password, env); },
+      async getUsers(env: any = {}) {
+        try {
+          const result = await queryUnifiedDb('SELECT id, email, username, name, role, email_verified, trust_level, status FROM "ultrst-users" ORDER BY email', [], env);
+          return { success: true, users: result.rows || [] };
+        } catch (error: any) { return { success: false, users: [], error: error?.message || 'System database unavailable.' }; }
       },
     },
 

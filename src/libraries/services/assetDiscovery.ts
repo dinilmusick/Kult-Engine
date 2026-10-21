@@ -179,15 +179,13 @@ const AUTHORITATIVE_ASSETS: DiscoveredAsset[] = [
 ];
 
 export function discoverKloksAssets(): DiscoveredAsset[] {
-  // Surface authoritative assets validated against KLOKS_PUBLIC_SURFACE
+  // KLOKS_PUBLIC_SURFACE is the authoritative package contract. The fallback
+  // metadata below is only the local adapter for symbols whose richer port
+  // descriptions are not exposed by the package contract yet.
   const validNames = new Set(KLOKS_PUBLIC_SURFACE.map((s) => s.name));
-  return AUTHORITATIVE_ASSETS.map((asset) => {
-    const isPublic = validNames.has(asset.export) || asset.package === '@ultrst-armada/krnl';
-    return {
-      ...asset,
-      metadata: { isPublicSurface: isPublic },
-    };
-  });
+  return AUTHORITATIVE_ASSETS
+    .filter((asset) => asset.package === '@ultrst-armada/krnl' || validNames.has(asset.export))
+    .map((asset) => ({ ...asset, metadata: { isPublicSurface: true } }));
 }
 
 export function searchAssets(query: string, category?: string): DiscoveredAsset[] {

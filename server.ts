@@ -13,7 +13,7 @@ import { createServer as createViteServer } from 'vite';
 import { fetchHandler, Env } from './src/backend/adapters/httpsAdapter';
 import { adaptNodeRequest } from './src/backend/adapters/nodeBridge';
 
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = 3000;
 
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';

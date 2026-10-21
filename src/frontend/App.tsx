@@ -33,11 +33,7 @@ export function App() {
           }
         }
       })
-      .catch(() => {
-        const defaultWs = { id: 'ws-kult-main', name: 'Kult Main Workspace', workspacePath: '/workspaces/kult-main' };
-        setWorkspaces([defaultWs]);
-        setActiveWorkspace(defaultWs);
-      });
+      .catch((error) => console.error('Failed to load workspaces', error));
   }, [token, userId, setActiveWorkspace]);
 
   const handleSelectWorkspace = (ws: WorkspaceRecord) => {

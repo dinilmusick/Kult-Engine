@@ -15,9 +15,10 @@ import { useGlobalHoverInspection } from '../../hooks/useGlobalHoverInspection';
 
 export interface KultWorkspaceProps {
   onLogout?: () => void;
+  onOpenServices?: () => void;
 }
 
-export const KultWorkspace: React.FC<KultWorkspaceProps> = ({ onLogout }) => {
+export const KultWorkspace: React.FC<KultWorkspaceProps> = ({ onLogout, onOpenServices }) => {
   const [isDockCollapsed, setIsDockCollapsed] = useState(false);
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
   const [isRightCollapsed, setIsRightCollapsed] = useState(false);
@@ -28,7 +29,7 @@ export const KultWorkspace: React.FC<KultWorkspaceProps> = ({ onLogout }) => {
   return (
     <div className="h-screen w-screen bg-[var(--skipo-bg)] text-[var(--skipo-text)] flex flex-col font-mono overflow-hidden">
       {/* Top Toolbar */}
-      <KultToolbar onLogout={onLogout} />
+      <KultToolbar onLogout={onLogout} onOpenServices={onOpenServices} />
 
       {/* Main Workspace Grid */}
       <div className="flex-1 flex overflow-hidden relative">

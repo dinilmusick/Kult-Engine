@@ -177,7 +177,7 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   }
   if (pathname === '/api/kult/kloks/services' && method === 'GET') {
     const { discoverKloksAssets } = await import('../../libraries/services/assetDiscovery');
-    return jsonRes({ success: true, services: discoverKloksAssets().filter((a: any) => a.category === 'services') });
+    return jsonRes({ success: true, services: discoverKloksAssets().filter((a: any) => a.category === 'services').map((a: any) => ({ ...a, id: encodeURIComponent(a.export) })) });
   }
   const copyMatch = pathname.match(/^\/api\/kult\/kloks\/services\/([^/]+)\/copy$/);
   if (copyMatch && method === 'POST') {

@@ -13,17 +13,16 @@ import { apiClient } from '../libraries/client/apiClient';
 import { useAppStore } from '../frontend-state/appStore';
 
 export function App() {
-  const [token, setToken] = useState<string | null>('sess::sys_admin::default');
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>('ws-kult-main');
-  const [workspaces, setWorkspaces] = useState<WorkspaceRecord[]>([
-    { id: 'ws-kult-main', name: 'Kult Main Workspace', workspacePath: '/workspaces/kult-main' },
-  ]);
+  const [token, setToken] = useState<string | null>(() => typeof window !== 'undefined' ? localStorage.getItem('kultAuthToken') : null);
+  const [userId, setUserId] = useState<string | null>(() => typeof window !== 'undefined' ? localStorage.getItem('kultUserId') : null);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
+  const [workspaces, setWorkspaces] = useState<WorkspaceRecord[]>([]);
   const { setActiveWorkspace } = useAppStore();
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !userId) return;
     apiClient
-      .getWorkspaces()
+      .getWorkspaces(userId)
       .then((data: any) => {
         if (data && Array.isArray(data.workspaces)) {
           setWorkspaces(data.workspaces);
@@ -39,7 +38,7 @@ export function App() {
         setWorkspaces([defaultWs]);
         setActiveWorkspace(defaultWs);
       });
-  }, [token, setActiveWorkspace]);
+  }, [token, userId, setActiveWorkspace]);
 
   const handleSelectWorkspace = (ws: WorkspaceRecord) => {
     setActiveWorkspaceId(ws.id);
@@ -48,7 +47,8 @@ export function App() {
 
   const handleCreateWorkspace = async (input: { name: string; workspacePath?: string; storageConfig?: any }) => {
     try {
-      const res = await apiClient.createWorkspace('sys_admin', input);
+      if (!userId) throw new Error('No authenticated user');
+      const res = await apiClient.createWorkspace(userId, input);
       const created = res.workspace || { id: `ws-${Date.now()}`, name: input.name, workspacePath: input.workspacePath || '/workspace' };
       setWorkspaces((prev) => [...prev, created]);
       setActiveWorkspaceId(created.id);
@@ -61,13 +61,18 @@ export function App() {
     }
   };
 
-  const handleDeleteWorkspace = (id: string) => {
+  const handleDeleteWorkspace = async (id: string) => {
+    if (userId) await apiClient.deleteWorkspace(userId, id);
     setWorkspaces((prev) => prev.filter((w) => w.id !== id));
     if (activeWorkspaceId === id) setActiveWorkspaceId(null);
   };
 
   if (!token) {
-    return <LoginGate appName="Kult Engine" onSuccess={(res) => setToken(res.token || 'demo-token')} />;
+    return <LoginGate appName="Kult Engine" onSuccess={(res) => {
+      if (!res.token || !res.user) return;
+      setToken(res.token); setUserId(res.user.id);
+      localStorage.setItem('kultAuthToken', res.token); localStorage.setItem('kultUserId', res.user.id);
+    }} />;
   }
 
   if (!activeWorkspaceId) {
@@ -80,8 +85,8 @@ export function App() {
         onCreateWorkspace={handleCreateWorkspace}
         onDeleteWorkspace={handleDeleteWorkspace}
         onLogout={() => {
-          setToken(null);
-          setActiveWorkspaceId(null);
+          setToken(null); setUserId(null); setActiveWorkspaceId(null);
+          localStorage.removeItem('kultAuthToken'); localStorage.removeItem('kultUserId');
         }}
       />
     );

@@ -158,6 +158,15 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     if (method === 'GET') return jsonRes(DepmBackend.services.routes.getAllRoutes());
     if (method === 'POST') return jsonRes(DepmBackend.services.routes.upsertRoute(await parseBody(request)));
   }
+  if (pathname === '/api/kult/kloks/services' && method === 'GET') {
+    const { discoverKloksAssets } = await import('../../libraries/services/assetDiscovery');
+    return jsonRes({ success: true, services: discoverKloksAssets().filter((a: any) => a.category === 'services') });
+  }
+  const copyMatch = pathname.match(/^\\/api\\/kult\\/kloks\\/services\\/([^/]+)\\/copy$/);
+  if (copyMatch && method === 'POST') {
+    return jsonRes({ success: false, status: 501, error: 'KLOKS local copy requires repository materialization; use the authenticated promotion/import workflow.' }, 501);
+  }
+
   if (pathname === '/api/kult/validate' && method === 'POST') {
     return jsonRes(DepmBackend.services.kult.validate((await parseBody(request)).document));
   }

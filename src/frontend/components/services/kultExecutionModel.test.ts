@@ -36,6 +36,8 @@ test('builds an executable WebContainer project with runtime dependencies and co
   assert.match(runner, /KULT_FUNCTIONALITY_IDS/);
   assert.match(runner, new RegExp(KULT_EXECUTION_RESULT_MARKER));
   assert.match(runner, /createState/);
+  assert.match(runner, /for \(const id of functionalityIds\)/);
+  assert.match(runner, /value = await fn\(value, createState\(\)\)/);
 });
 
 test('parses structured execution output even when the functionality logs first', () => {

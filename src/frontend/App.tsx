@@ -53,12 +53,12 @@ export function App() {
       setWorkspaces((prev) => [...prev, created]);
       setActiveWorkspaceId(created.id);
       setActiveWorkspace(created);
-    } catch {
-      const fallback: WorkspaceRecord = { id: `ws-${Date.now()}`, name: input.name, workspacePath: input.workspacePath || '/workspace' };
-      setWorkspaces((prev) => [...prev, fallback]);
-      setActiveWorkspaceId(fallback.id);
-      setActiveWorkspace(fallback as any);
+    } catch (error) {
+      console.error('Failed to create workspace', error);
+      throw error;
     }
+    /* unreachable fallback removed */
+
   };
 
   const handleDeleteWorkspace = async (id: string) => {
@@ -95,8 +95,8 @@ export function App() {
   return (
     <KultWorkspace
       onLogout={() => {
-        setToken(null);
-        setActiveWorkspaceId(null);
+        setToken(null); setUserId(null); setActiveWorkspaceId(null);
+        localStorage.removeItem('kultAuthToken'); localStorage.removeItem('kultUserId');
       }}
     />
   );

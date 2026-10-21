@@ -135,7 +135,11 @@ export function App() {
     return (
       <ServicesWorkspace
         services={localServices}
-        onBack={() => setShowServices(false)}
+        onBack={() => {
+          setShowServices(false);
+          setActiveWorkspaceId(null);
+          setActiveWorkspace(null);
+        }}
         onCreate={() => {
           const document = {
             ...STARTER_SERVICES[0],

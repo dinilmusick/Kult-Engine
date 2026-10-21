@@ -69,7 +69,7 @@ export function App() {
 
   };
 
-  const handleDeleteWorkspace = async (id: string) => {
+  const handleSaveLocalService = async (s: LocalServiceRecord) => {\n    const next = localServices.map(x => x.id === s.id ? s : x);\n    if (!next.some(x => x.id === s.id)) next.push(s);\n    setLocalServices(next);\n    await fetch('/api/db/workspace',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':userId||''},body:JSON.stringify({workspaceId:activeWorkspaceId,services:next})});\n  };\n\n  const handleDeleteWorkspace = async (id: string) => {
     if (userId) await apiClient.deleteWorkspace(userId, id);
     setWorkspaces((prev) => prev.filter((w) => w.id !== id));
     if (activeWorkspaceId === id) setActiveWorkspaceId(null);
@@ -100,7 +100,7 @@ export function App() {
     );
   }
 
-  if (showServices) return <ServicesWorkspace services={localServices} onBack={()=>setShowServices(false)} onCreate={()=>{ const document = { ...STARTER_SERVICES[0], service: { ...STARTER_SERVICES[0].service, id: 'local.' + Date.now().toString(36), name: 'New Local Service', description: '' }, nodes: [], edges: [], assets: [], tests: [], metadata: { author: userId || 'local' } }; setLocalServices(prev => [...prev, { id: document.service.id, folder: document.service.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'), document, updatedAt: new Date().toISOString() }]); }} onSave={async s=>{ setLocalServices(prev=>prev.map(x=>x.id===s.id?s:x)); await fetch('/api/db/workspace',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':userId||''},body:JSON.stringify({workspaceId:activeWorkspaceId,services:localServices.map(x=>x.id===s.id?s:x)})}); }} />;
+  if (showServices) return <ServicesWorkspace services={localServices} onBack={()=>setShowServices(false)} onCreate={()=>{ const document = { ...STARTER_SERVICES[0], service: { ...STARTER_SERVICES[0].service, id: 'local.' + Date.now().toString(36), name: 'New Local Service', description: '' }, nodes: [], edges: [], assets: [], tests: [], metadata: { author: userId || 'local' } }; setLocalServices(prev => [...prev, { id: document.service.id, folder: document.service.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'), document, updatedAt: new Date().toISOString() }]); }} onSave={handleSaveLocalService} />;
 
   return (
     <KultWorkspace

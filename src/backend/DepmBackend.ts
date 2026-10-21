@@ -97,6 +97,7 @@ export const DepmBackend = {
 
     srkl: {
       async getSrklAccounts(_userId = 'sys_admin', _service = '', _env: any = {}) { return { success: true, accounts: [] }; },
+      async listBackblazeBuckets(input: any = {}) { return listBackblazeBuckets(input); },
       async getSrklStatus(_env: any = {}) { return { success: true, status: 'operational', timestamp: new Date().toISOString() }; },
       async syncSrklAccountsToWorkspace(_wsId: string, _userId: string, _vaultKey: string, _env: any = {}) { return { success: true, count: 0 }; },
       async getWorkspaceAccounts(_wsId: string, _userId: string, _vaultKey: string, _env: any = {}, _inc?: boolean) { return { success: true, accounts: [] }; },

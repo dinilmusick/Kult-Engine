@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { listBackblazeBuckets, getWorkspaces } from './kultWorkspaceService';
+import { listBackblazeBuckets } from './kultWorkspaceService';
 
 describe('Kult workspace storage', () => {
   it('rejects a Backblaze connection without credentials', async () => {

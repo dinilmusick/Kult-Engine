@@ -1,6 +1,13 @@
 import type { ServiceDocument } from '../../../libraries/types/serviceIR';
 import type { FunctionalityAsset } from './functionalityEditorModel';
 
+export interface KultOrchestration {
+  id: string;
+  name: string;
+  description: string;
+  functionalityIds: string[];
+}
+
 export interface KultExecutionTest {
   id: string;
   name: string;
@@ -36,21 +43,37 @@ function buildRunnerSource(functionalityFiles: Array<{ id: string; path: string 
   const imports = functionalityFiles.map((item, index) =>
     "import { main as main" + index + " } from './" + item.path + "';",
   ).join('\n');
-  const mainNames = functionalityFiles.map((_, index) => 'main' + index).join(', ');
+  const names = functionalityFiles.map((_, index) => 'main' + index).join(', ');
+  const ids = JSON.stringify(functionalityFiles.map(item => item.id));
 
   return "import { readFile } from 'node:fs/promises';\n" +
     imports + "\n\n" +
     "const input = JSON.parse(process.env.KULT_TEST_INPUT || '{}');\n" +
     "const mode = process.env.KULT_TEST_MODE || 'functionality';\n" +
-    "const target = process.env.KULT_TARGET || '0';\n\n" +
+    "const target = process.env.KULT_TARGET || '0';\n" +
+    "const orchestrationIds = JSON.parse(process.env.KULT_ORCHESTRATION_IDS || '[]');\n\n" +
     "async function run() {\n" +
-    "  if (mode !== 'functionality') throw new Error('Unsupported execution mode: ' + mode);\n" +
-    "  const index = Number(target);\n" +
-    "  const fn = [" + mainNames + "][index];\n" +
-    "  if (typeof fn !== 'function') throw new Error('Functionality target not found: ' + target);\n" +
+    "  const functions = [" + names + "];\n" +
+    "  if (mode === 'functionality') {\n" +
+    "    const index = Number(target);\n" +
+    "    const fn = functions[index];\n" +
+    "    if (typeof fn !== 'function') throw new Error('Functionality target not found: ' + target);\n" +
+    "    const started = Date.now();\n" +
+    "    const output = await fn(input, {});\n" +
+    "    process.stdout.write(JSON.stringify({ ok: true, output, durationMs: Date.now() - started }));\n" +
+    "    return;\n" +
+    "  }\n" +
+    "  if (mode !== 'service') throw new Error('Unsupported execution mode: ' + mode);\n" +
+    "  const idList = " + ids + ";\n" +
+    "  let value = input;\n" +
     "  const started = Date.now();\n" +
-    "  const output = await fn(input, {});\n" +
-    "  process.stdout.write(JSON.stringify({ ok: true, output, durationMs: Date.now() - started }));\n" +
+    "  for (const id of orchestrationIds) {\n" +
+    "    const index = idList.indexOf(id);\n" +
+    "    const fn = functions[index];\n" +
+    "    if (typeof fn !== 'function') throw new Error('Orchestration functionality not found: ' + id);\n" +
+    "    value = await fn(value, {});\n" +
+    "  }\n" +
+    "  process.stdout.write(JSON.stringify({ ok: true, output: value, durationMs: Date.now() - started }));\n" +
     "}\n" +
     "run().catch(error => {\n" +
     "  process.stdout.write(JSON.stringify({ ok: false, error: error instanceof Error ? error.stack || error.message : String(error) }));\n" +
@@ -87,16 +110,11 @@ export function buildExecutionProject(
       }, null, 2),
     },
   };
-
   files['runner.ts'] = { file: { contents: buildRunnerSource(functionalityFiles) } };
 
   void service;
   void targetFunctionalityId;
-  return {
-    files,
-    entryFile: 'runner.ts',
-    command: ['npx', 'tsx', 'runner.ts'],
-  };
+  return { files, entryFile: 'runner.ts', command: ['npx', 'tsx', 'runner.ts'] };
 }
 
 export function parseExecutionResult(raw: string): { ok: boolean; output?: unknown; error?: string; durationMs?: number } {

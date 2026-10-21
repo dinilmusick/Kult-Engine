@@ -22,6 +22,10 @@ const workspaceStore = new Map<string, any[]>([
 
 const workspaceDataStore = new Map<string, any>();
 
+function toLocalServiceRecord(document: any) {
+  return { id: document.service?.id || `local-${Date.now().toString(36)}`, folder: String(document.service?.name || 'new-service').toLowerCase().replace(/[^a-z0-9]+/g, '-'), document, updatedAt: new Date().toISOString() };
+}
+
 export const DepmBackend = {
   services: {
     auth: {
@@ -43,7 +47,7 @@ export const DepmBackend = {
       },
       async createWorkspace(userId = 'sys_admin', data: any = {}, _env: any = {}) {
         const id = `ws-${Date.now().toString(36)}`;
-        const ws = { id, name: data.name || 'New Workspace', storageProvider: data.storageProvider || 'in-memory', workspacePath: `/workspaces/${id}` };
+        const ws = { id, name: data.name || 'New Workspace', storageProvider: data.storageProvider || 'local', storageConfig: data.storageConfig || null, workspacePath: `/workspaces/${id}` };
         const list = workspaceStore.get(userId) || [];
         list.push(ws);
         workspaceStore.set(userId, list);
@@ -65,7 +69,7 @@ export const DepmBackend = {
       },
       async loadWorkspaceData(userId = 'sys_admin', wsId = 'ws-kult-main', _env: any = {}) {
         const key = `${userId}:${wsId}`;
-        const data = workspaceDataStore.get(key) || { services: STARTER_SERVICES };
+        const data = workspaceDataStore.get(key) || { services: STARTER_SERVICES.map(toLocalServiceRecord) };
         return { success: true, data };
       },
       async saveWorkspaceData(userId = 'sys_admin', wsId = 'ws-kult-main', data: any = {}, _env: any = {}) {

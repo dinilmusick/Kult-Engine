@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft, Plus, Save, Package, GitBranch, Layers3 } from 'lucide-react';
 import type { ServiceDocument } from '../../../libraries/types/serviceIR';
 import type { LocalServiceRecord } from './LocalServicesMenu';
+import { validateServiceEditor } from './serviceEditorModel';
 
 interface Functionality { id: string; name: string; description: string; inputSignature: string; outputSignature: string; tags: string[]; }
 interface Orchestration { id: string; name: string; description: string; functionalityIds: string[]; }
@@ -15,6 +16,7 @@ export const ServiceEditor: React.FC<{
   onSave: (service: LocalServiceRecord) => void;
 }> = ({ service, onBack, onSave }) => {
   const [doc, setDoc] = React.useState<ServiceDocument>(service.document);
+  const [folder, setFolder] = React.useState(service.folder);
   const [libraries, setLibraries] = React.useState<string[]>(Array.isArray(service.document.metadata?.libraries) ? service.document.metadata.libraries as string[] : ['@ultrst-armada/gutts']);
   const [functionality, setFunctionality] = React.useState<Functionality[]>(Array.isArray(service.document.metadata?.functionalities) ? service.document.metadata.functionalities as Functionality[] : []);
   const [orchestrations, setOrchestrations] = React.useState<Orchestration[]>(Array.isArray(service.document.metadata?.orchestrations) ? service.document.metadata.orchestrations as Orchestration[] : []);
@@ -37,11 +39,12 @@ export const ServiceEditor: React.FC<{
   }
 
   const addLibrary = (name: string) => { if (!libraries.includes(name)) setLibraries(prev => [...prev, name]); };
+  const validation = validateServiceEditor({ name: doc.service.name, version: doc.service.version, folder, libraries, functionalities: functionality, orchestrations });
 
   return <div className="h-full w-full bg-[var(--skipo-bg)] text-[var(--skipo-text)] flex flex-col">
     <header className="h-12 shrink-0 border-b border-[var(--skipo-border-color)]/30 flex items-center justify-between px-4 bg-[var(--skipo-surface)]">
       <div className="flex items-center gap-3"><button onClick={onBack} className="p-1.5 rounded hover:bg-[var(--skipo-bg)]"><ArrowLeft size={15}/></button><div><div className="font-black">{doc.service.name}</div><div className="text-[9px] text-[var(--skipo-text-muted)]">{service.folder}/</div></div></div>
-      <button onClick={() => onSave({...service, document: { ...doc, metadata: { ...doc.metadata, libraries, functionalities: functionality, orchestrations } }, updatedAt: new Date().toISOString()})} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs"><Save size={13}/> Save</button>
+      <button disabled={!validation.isValid} onClick={() => onSave({...service, folder, document: { ...doc, metadata: { ...doc.metadata, libraries, functionalities: functionality, orchestrations } }, updatedAt: new Date().toISOString()})} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs"><Save size={13}/> Save</button>
     </header>
     <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-[var(--skipo-border-color)]/20 overflow-hidden">
       <section className="overflow-auto p-4 bg-[var(--skipo-bg)]">
@@ -50,7 +53,9 @@ export const ServiceEditor: React.FC<{
           <label className="block text-[10px]">Name<input className={input} value={doc.service.name} onChange={e => update({name:e.target.value})}/></label>
           <label className="block text-[10px]">Version<input className={input} value={doc.service.version} onChange={e => update({version:e.target.value})}/></label>
           <label className="block text-[10px]">Description<textarea className={input} rows={4} value={doc.service.description} onChange={e => update({description:e.target.value})}/></label>
-          <div className="text-[9px] text-[var(--skipo-text-muted)]">Folder: <code>{service.folder}/</code></div>
+          <label className="block text-[10px]">Folder<input className={input} value={folder} onChange={e => setFolder(e.target.value)}/></label>
+          <div className="text-[9px] text-[var(--skipo-text-muted)]">Workspace-relative service location.</div>
+          {!validation.isValid && <div className="mt-3 rounded border border-[var(--skipo-danger)]/30 p-2 text-[9px] text-[var(--skipo-danger)]">{validation.errors.map(error => <div key={error}>• {error}</div>)}</div>}
         </div>
       </section>
       <section className="overflow-auto p-4 bg-[var(--skipo-bg)]">

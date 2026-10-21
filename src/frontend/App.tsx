@@ -80,6 +80,21 @@ export function App() {
     }
   };
 
+  const handleCopyKloksService = async (service: { id: string }) => {
+    const result = await apiClient.copyKloksServiceLocally(service.id, userId || "");
+    if (!result?.success || !result?.service) throw new Error(result?.error || "Unable to copy KLOKS service.");
+    const next = result.service as LocalServiceRecord;
+    setLocalServices((prev) => prev.some((item) => item.id === next.id) ? prev : [...prev, next]);
+    if (activeWorkspaceId) {
+      const merged = localServices.some((item) => item.id === next.id) ? localServices : [...localServices, next];
+      await fetch("/api/db/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
+        body: JSON.stringify({ workspaceId: activeWorkspaceId, services: merged }),
+      });
+    }
+  };
+
   const handleSaveLocalService = async (s: LocalServiceRecord) => {
     const next = localServices.map(x => x.id === s.id ? s : x);
     if (!next.some(x => x.id === s.id)) next.push(s);
@@ -144,6 +159,7 @@ export function App() {
           setActiveWorkspaceId(null);
           setActiveWorkspace(null);
         }}
+        onCopyLocal={handleCopyKloksService}
         onCreate={() => {
           const document = {
             ...STARTER_SERVICES[0],

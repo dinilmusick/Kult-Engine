@@ -10,7 +10,7 @@ export interface WebContainerRunResult {
 }
 
 let instancePromise: Promise<WebContainer> | null = null;
-let runQueue: Promise<unknown> = Promise.resolve();
+let runQueue: Promise<void> = Promise.resolve();
 
 async function getInstance(): Promise<WebContainer> {
   if (typeof window === 'undefined') {
@@ -102,7 +102,7 @@ export async function runInWebContainer(
 ): Promise<WebContainerRunResult> {
   const previous = runQueue;
   let release!: () => void;
-  runQueue = new Promise(resolve => { release = resolve; });
+  runQueue = new Promise<void>(resolve => { release = resolve; });
   await previous;
   try {
     return await executeRun(project, input, targetIndex, options);

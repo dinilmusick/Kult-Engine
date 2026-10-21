@@ -10,10 +10,25 @@ export interface WebContainerRunResult {
 }
 
 let instancePromise: Promise<WebContainer> | null = null;
+let runQueue: Promise<unknown> = Promise.resolve();
 
 async function getInstance(): Promise<WebContainer> {
+  if (typeof window === 'undefined') {
+    throw new Error('WebContainer execution is browser-only.');
+  }
+  if (!window.crossOriginIsolated) {
+    throw new Error(
+      'WebContainer requires a cross-origin-isolated page. Ensure COOP=same-origin and COEP=require-corp are served, then hard-refresh the app.',
+    );
+  }
   if (!instancePromise) {
-    instancePromise = WebContainer.boot();
+    instancePromise = WebContainer.boot({
+      coep: 'require-corp',
+      workdirName: 'kult-execution',
+    }).catch(error => {
+      instancePromise = null;
+      throw error;
+    });
   }
   return instancePromise;
 }
@@ -37,11 +52,11 @@ async function collectOutput(process: Awaited<ReturnType<WebContainer['spawn']>>
   return output;
 }
 
-export async function runInWebContainer(
+async function executeRun(
   project: GeneratedExecutionProject,
   input: Record<string, unknown>,
   targetIndex: number,
-  options: { mode?: 'functionality' | 'service'; orchestrationIds?: string[] } = {},
+  options: { mode?: 'functionality' | 'service'; functionalityIds?: string[] } = {},
 ): Promise<WebContainerRunResult> {
   const container = await getInstance();
   await container.mount(toFileSystemTree(project.files));
@@ -55,7 +70,7 @@ export async function runInWebContainer(
       installExitCode,
       exitCode: installExitCode,
       output: installOutput,
-      result: { ok: false, error: 'Dependency installation failed.\\n' + installOutput },
+      result: { ok: false, error: 'Dependency installation failed.\n' + installOutput },
     };
   }
 
@@ -64,7 +79,7 @@ export async function runInWebContainer(
       KULT_TEST_INPUT: JSON.stringify(input),
       KULT_TARGET: String(targetIndex),
       KULT_TEST_MODE: options.mode || 'functionality',
-      KULT_ORCHESTRATION_IDS: JSON.stringify(options.orchestrationIds || []),
+      KULT_FUNCTIONALITY_IDS: JSON.stringify(options.functionalityIds || []),
     },
   });
   const outputPromise = collectOutput(run);
@@ -79,9 +94,27 @@ export async function runInWebContainer(
   };
 }
 
+export async function runInWebContainer(
+  project: GeneratedExecutionProject,
+  input: Record<string, unknown>,
+  targetIndex: number,
+  options: { mode?: 'functionality' | 'service'; functionalityIds?: string[] } = {},
+): Promise<WebContainerRunResult> {
+  const previous = runQueue;
+  let release!: () => void;
+  runQueue = new Promise(resolve => { release = resolve; });
+  await previous;
+  try {
+    return await executeRun(project, input, targetIndex, options);
+  } finally {
+    release();
+  }
+}
+
 export async function disposeWebContainer(): Promise<void> {
   if (!instancePromise) return;
   const container = await instancePromise;
   container.teardown();
   instancePromise = null;
+  runQueue = Promise.resolve();
 }

@@ -5,12 +5,12 @@
  */
 
 import React, { useState } from 'react';
-import { Play, CheckCircle2, AlertTriangle, Package, Beaker, LayoutTemplate, LogOut, HardDrive, Download } from 'lucide-react';
+import { Play, CheckCircle2, AlertTriangle, Package, Beaker, LayoutTemplate, LogOut, HardDrive, Download, Server } from 'lucide-react';
 import { useServiceDocumentStore } from '../../../frontend-state/serviceDocumentStore';
 import { useAppStore } from '../../../frontend-state/appStore';
 import { INSTALLED_KLOKS_SERVICES } from '../../../libraries/services/kloksImporter';
 
-export const KultToolbar: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
+export const KultToolbar: React.FC<{ onLogout?: () => void; onOpenServices?: () => void }> = ({ onLogout, onOpenServices }) => {
   const {
     document,
     validationReport,
@@ -76,6 +76,8 @@ export const KultToolbar: React.FC<{ onLogout?: () => void }> = ({ onLogout }) =
           )}
         </div>
       </div>
+
+      {onOpenServices && <button onClick={onOpenServices} className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[var(--skipo-bg)] border border-[var(--skipo-border-color)]/30 text-[var(--skipo-text)] hover:border-[var(--skipo-accent)]"><Server size={12}/><span>Services</span></button>}
 
       {/* Primary Actions */}
       <div className="flex items-center gap-2">

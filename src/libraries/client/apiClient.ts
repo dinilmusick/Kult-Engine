@@ -17,6 +17,18 @@ async function wrappedFetch(url: string, init?: RequestInit): Promise<Response> 
 }
 
 export const apiClient = {
+  async listKloksServices() {
+    const res = await wrappedFetch('/api/kult/kloks/services');
+    return res.json();
+  },
+
+  async copyKloksServiceLocally(serviceId: string, userId: string) {
+    const res = await wrappedFetch('/api/kult/kloks/services/' + encodeURIComponent(serviceId) + '/copy', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+    });
+    return res.json();
+  },
+
   async login(email?: string, password?: string, isAdmin: boolean = false) {
     const res = await wrappedFetch('/api/auth/login', {
       method: 'POST',

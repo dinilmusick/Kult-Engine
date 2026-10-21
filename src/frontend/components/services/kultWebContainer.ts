@@ -41,6 +41,7 @@ export async function runInWebContainer(
   project: GeneratedExecutionProject,
   input: Record<string, unknown>,
   targetIndex: number,
+  options: { mode?: 'functionality' | 'service'; orchestrationIds?: string[] } = {},
 ): Promise<WebContainerRunResult> {
   const container = await getInstance();
   await container.mount(toFileSystemTree(project.files));
@@ -54,7 +55,8 @@ export async function runInWebContainer(
       installExitCode,
       exitCode: installExitCode,
       output: installOutput,
-      result: { ok: false, error: 'Dependency installation failed.\n' + installOutput },
+      result: { ok: false, error: 'Dependency installation failed.
+' + installOutput },
     };
   }
 
@@ -62,7 +64,8 @@ export async function runInWebContainer(
     env: {
       KULT_TEST_INPUT: JSON.stringify(input),
       KULT_TARGET: String(targetIndex),
-      KULT_TEST_MODE: options.mode || 'functionality',\n      KULT_ORCHESTRATION_IDS: JSON.stringify(options.orchestrationIds || []),
+      KULT_TEST_MODE: options.mode || 'functionality',
+      KULT_ORCHESTRATION_IDS: JSON.stringify(options.orchestrationIds || []),
     },
   });
   const outputPromise = collectOutput(run);

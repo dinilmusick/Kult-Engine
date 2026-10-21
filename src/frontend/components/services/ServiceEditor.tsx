@@ -1,9 +1,9 @@
 import React from 'react';
-import { ArrowLeft, Plus, Save, Package, GitBranch, Layers3, Code2 } from 'lucide-react';
+import { ArrowLeft, Plus, Save, Package, GitBranch, Layers3, Code2, Play } from 'lucide-react';
 import type { ServiceDocument } from '../../../libraries/types/serviceIR';
 import type { LocalServiceRecord } from './LocalServicesMenu';
 import { validateServiceEditor } from './serviceEditorModel';
-import { FunctionalityEditor } from './FunctionalityEditor';
+import { FunctionalityEditor } from './FunctionalityEditor';\nimport { ServiceTestRunner } from './ServiceTestRunner';
 import {
   createFunctionalityAsset,
   normalizeFunctionalityAsset,
@@ -40,7 +40,7 @@ export const ServiceEditor: React.FC<{
   const [orchestrations, setOrchestrations] = React.useState<Orchestration[]>(Array.isArray(service.document.metadata?.orchestrations) ? service.document.metadata.orchestrations as Orchestration[] : []);
   const [editingFunctionality, setEditingFunctionality] = React.useState<FunctionalityAsset | null>(null);
   const [showFunctionDialog, setShowFunctionDialog] = React.useState(false);
-  const [showOrchestrationDialog, setShowOrchestrationDialog] = React.useState(false);
+  const [showOrchestrationDialog, setShowOrchestrationDialog] = React.useState(false);\n  const [showTestRunner, setShowTestRunner] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [splitX, setSplitX] = React.useState(50);
   const [splitY, setSplitY] = React.useState(50);
@@ -87,7 +87,7 @@ export const ServiceEditor: React.FC<{
         <button onClick={onBack} className="p-1.5 rounded hover:bg-[var(--skipo-bg)]"><ArrowLeft size={15}/></button>
         <div><div className="font-black">{doc.service.name}</div><div className="text-[9px] text-[var(--skipo-text-muted)]">{service.folder}/</div></div>
       </div>
-      <button disabled={!validation.isValid} onClick={save} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs disabled:opacity-40"><Save size={13}/> Save</button>
+      <div className="flex items-center gap-2"><button onClick={()=>setShowTestRunner(true)} disabled={!functionalities.length} className="flex items-center gap-1 px-3 py-1.5 rounded border text-xs disabled:opacity-40"><Play size={13}/> Test</button><button disabled={!validation.isValid} onClick={save} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs disabled:opacity-40"><Save size={13}/> Save</button></div>
     </header>
 
     <div ref={containerRef} className="flex-1 relative overflow-hidden bg-[var(--skipo-bg)] select-none">
@@ -136,7 +136,7 @@ export const ServiceEditor: React.FC<{
 
     {showFunctionDialog&&<FunctionDialog onClose={()=>setShowFunctionDialog(false)} onCreate={fn=>{setFunctionalities(prev=>[...prev,fn]);setShowFunctionDialog(false)}}/>}
     {showOrchestrationDialog&&<OrchestrationDialog functions={functionalities} onClose={()=>setShowOrchestrationDialog(false)} onCreate={o=>{setOrchestrations(prev=>[...prev,{...o,id:'orch-'+Date.now().toString(36)}]);setShowOrchestrationDialog(false)}}/>}
-    {editingFunctionality&&<FunctionalityEditor functionality={editingFunctionality} onClose={()=>setEditingFunctionality(null)} onSave={fn=>{setFunctionalities(prev=>prev.map(item=>item.id===fn.id?fn:item));setEditingFunctionality(null)}}/>}
+    {editingFunctionality&&<FunctionalityEditor functionality={editingFunctionality} onClose={()=>setEditingFunctionality(null)} onSave={fn=>{setFunctionalities(prev=>prev.map(item=>item.id===fn.id?fn:item));setEditingFunctionality(null)}}/>}\n    {showTestRunner&&<ServiceTestRunner service={doc} functionalities={functionalities} orchestrations={orchestrations} onClose={()=>setShowTestRunner(false)}/>} 
   </div>;
 };
 

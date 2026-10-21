@@ -28,6 +28,9 @@ async function startServer() {
 
   const server = http.createServer(async (req, res) => {
     const url = req.url || '/';
+    // WebContainers require cross-origin isolation (SharedArrayBuffer).
+    res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
 
     // API routes → universal fetchHandler via adaptNodeRequest
     if (url.startsWith('/api/') || url === '/api' || url.startsWith('/health')) {

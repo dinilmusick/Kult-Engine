@@ -158,6 +158,19 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     if (method === 'GET') return jsonRes(DepmBackend.services.routes.getAllRoutes());
     if (method === 'POST') return jsonRes(DepmBackend.services.routes.upsertRoute(await parseBody(request)));
   }
+  if (pathname === '/api/kult/npm/search' && method === 'GET') {
+    const q = url.searchParams.get('q') || '';
+    if (!q.trim()) return jsonRes({ success: true, packages: [] });
+    try {
+      const response = await fetch('https://registry.npmjs.org/-/v1/search?text=' + encodeURIComponent(q) + '&size=20');
+      const body = await response.json() as any;
+      const packages = (body.objects || []).map((x: any) => x.package?.name).filter(Boolean);
+      const preferred = packages.filter((name: string) => name.startsWith('@dinilmusick/') || name.startsWith('@ultrst-armada/'));
+      return jsonRes({ success: true, packages: [...preferred, ...packages.filter((n: string) => !preferred.includes(n))] });
+    } catch (error: any) {
+      return jsonRes({ success: false, packages: [], error: error?.message || 'npm registry unavailable' }, 502);
+    }
+  }
   if (pathname === '/api/kult/kloks/services' && method === 'GET') {
     const { discoverKloksAssets } = await import('../../libraries/services/assetDiscovery');
     return jsonRes({ success: true, services: discoverKloksAssets().filter((a: any) => a.category === 'services') });

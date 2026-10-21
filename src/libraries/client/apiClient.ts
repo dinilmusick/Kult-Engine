@@ -42,6 +42,11 @@ export const apiClient = {
     return res.json();
   },
 
+  async deleteWorkspace(userId: string, workspaceId: string) {
+    const res = await wrappedFetch('/api/auth/workspaces?userId=' + encodeURIComponent(userId) + '&workspaceId=' + encodeURIComponent(workspaceId), { method: 'DELETE' });
+    return res.json();
+  },
+
   async createWorkspace(userId: string, data: Record<string, unknown>) {
     const res = await wrappedFetch('/api/auth/workspaces', {
       method: 'POST',

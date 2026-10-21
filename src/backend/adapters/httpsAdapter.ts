@@ -7,6 +7,7 @@
 import { DepmBackend } from '../DepmBackend';
 import { adaptNodeRequest } from './nodeBridge';
 import { handleVaultRoutes } from './vaultRoutes';
+import { createLocalServiceFromKloksAsset, getKloksServiceAsset } from '../../libraries/services/assetDiscovery';
 
 export interface Env {
   ENVIRONMENT?: string;
@@ -180,7 +181,9 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   }
   const copyMatch = pathname.match(/^\/api\/kult\/kloks\/services\/([^/]+)\/copy$/);
   if (copyMatch && method === 'POST') {
-    return jsonRes({ success: false, status: 501, error: 'KLOKS local copy requires repository materialization; use the authenticated promotion/import workflow.' }, 501);
+    const asset = getKloksServiceAsset(copyMatch[1]);
+    if (!asset) return jsonRes({ success: false, status: 404, error: 'KLOKS service not found.' }, 404);
+    return jsonRes({ success: true, service: createLocalServiceFromKloksAsset(asset) });
   }
 
   if (pathname === '/api/kult/validate' && method === 'POST') {

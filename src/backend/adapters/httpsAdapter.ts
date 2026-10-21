@@ -105,8 +105,13 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     }
   }
 
+  // 2.5 SRKL Backblaze federation used by workspace creation
+  if (pathname === '/api/srkl/backblaze/buckets' && method === 'POST') {
+    return jsonRes(await DepmBackend.services.srkl.listBackblazeBuckets(await parseBody(request)));
+  }
+
   // 3. Storage Connections & Testing
-  if (pathname === '/api/storage/connections') {
+  if (pathname === '/api/storage/connections' || pathname === '/api/auth/storage/connections') {
     const uId = getUserId(request, url);
     if (method === 'GET') return jsonRes(await DepmBackend.services.storage.getStorageConnections(uId, env));
     if (method === 'POST') {
@@ -118,7 +123,7 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   if (connDelMatch && method === 'DELETE') {
     return jsonRes(await DepmBackend.services.storage.deleteStorageConnection(getUserId(request, url), connDelMatch[1], env));
   }
-  if (pathname === '/api/storage/test' && method === 'POST') {
+  if ((pathname === '/api/storage/test' || pathname === '/api/auth/storage/test') && method === 'POST') {
     return jsonRes(await DepmBackend.services.storage.testStorageConnection((await parseBody(request)).connection || await parseBody(request)));
   }
 

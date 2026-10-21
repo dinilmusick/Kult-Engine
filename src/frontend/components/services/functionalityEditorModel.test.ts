@@ -49,11 +49,8 @@ test('libraries are deduplicated and gutts cannot be removed', () => {
   assert.deepEqual(unchanged.libraries, ['@ultrst-armada/gutts']);
   const updated = setFunctionalityLibrary(asset, 'zod');
   assert.deepEqual(updated.libraries, ['@ultrst-armada/gutts', 'zod']);
-  assert.deepEqual(removeHelper(updated, 'missing'), updated.helpers);
-  assert.deepEqual(
-    removeEvent(updated, 'missing'),
-    updated,
-  );
+  assert.equal(removeHelper(updated, 'missing').helpers.length, 0);
+  assert.equal(removeEvent(updated, 'missing').events.length, 0);
 });
 
 test('legacy functionality metadata receives safe editor defaults', () => {

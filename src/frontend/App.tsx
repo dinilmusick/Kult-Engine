@@ -163,27 +163,24 @@ export function App() {
         onCreate={() => {
           const document = {
             ...STARTER_SERVICES[0],
-            service: {
-              ...STARTER_SERVICES[0].service,
-              id: "local." + Date.now().toString(36),
-              name: "New Local Service",
-              description: ""
-            },
-            nodes: [],
-            edges: [],
-            assets: [],
-            tests: [],
-            metadata: { author: userId || "local" }
+            service: { ...STARTER_SERVICES[0].service, id: "local." + Date.now().toString(36), name: "New Local Service", description: "" },
+            nodes: [], edges: [], assets: [], tests: [],
+            metadata: { author: userId || "local", libraries: ["@ultrst-armada/gutts"], functionalities: [], orchestrations: [] }
           };
-          setLocalServices(prev => [
-            ...prev,
-            {
-              id: document.service.id,
-              folder: document.service.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-              document,
-              updatedAt: new Date().toISOString()
-            }
-          ]);
+          const created: LocalServiceRecord = {
+            id: document.service.id,
+            folder: document.service.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            document,
+            updatedAt: new Date().toISOString()
+          };
+          setLocalServices(prev => [...prev, created]);
+          if (activeWorkspaceId) {
+            void fetch("/api/db/workspace", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
+              body: JSON.stringify({ workspaceId: activeWorkspaceId, services: [...localServices, created] })
+            });
+          }
         }}
         onSave={handleSaveLocalService}
         userId={userId}

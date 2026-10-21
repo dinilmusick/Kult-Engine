@@ -31,11 +31,13 @@ export const ServicesWorkspace: React.FC<{
 
   if (editor) {
     return (
-      <ServiceEditor
-        service={editor}
-        onBack={() => setEditor(null)}
-        onSave={(next) => { onSave(next); setEditor(next); }}
-      />
+      <div className="h-screen w-screen flex flex-col bg-[var(--skipo-bg)] text-[var(--skipo-text)]">
+        <ServiceEditor
+          service={editor}
+          onBack={() => setEditor(null)}
+          onSave={(next) => { onSave(next); setEditor(next); }}
+        />
+      </div>
     );
   }
 

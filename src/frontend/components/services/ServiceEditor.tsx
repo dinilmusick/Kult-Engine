@@ -38,6 +38,35 @@ export const ServiceEditor: React.FC<{
     } finally { setLoadingNpm(false); }
   }
 
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [splitX, setSplitX] = React.useState<number>(50);
+  const [splitY, setSplitY] = React.useState<number>(50);
+  const [dragging, setDragging] = React.useState<'x' | 'y' | null>(null);
+
+  React.useEffect(() => {
+    if (!dragging) return;
+    const onMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      if (dragging === 'x') {
+        const x = e.clientX - rect.left;
+        const pct = Math.max(20, Math.min(80, (x / rect.width) * 100));
+        setSplitX(pct);
+      } else if (dragging === 'y') {
+        const y = e.clientY - rect.top;
+        const pct = Math.max(20, Math.min(80, (y / rect.height) * 100));
+        setSplitY(pct);
+      }
+    };
+    const onMouseUp = () => setDragging(null);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [dragging]);
+
   const addLibrary = (name: string) => { if (!libraries.includes(name)) setLibraries(prev => [...prev, name]); };
   const validation = validateServiceEditor({ name: doc.service.name, version: doc.service.version, folder, libraries, functionalities: functionality, orchestrations });
 
@@ -46,8 +75,8 @@ export const ServiceEditor: React.FC<{
       <div className="flex items-center gap-3"><button onClick={onBack} className="p-1.5 rounded hover:bg-[var(--skipo-bg)]"><ArrowLeft size={15}/></button><div><div className="font-black">{doc.service.name}</div><div className="text-[9px] text-[var(--skipo-text-muted)]">{service.folder}/</div></div></div>
       <button disabled={!validation.isValid} onClick={() => onSave({...service, folder, document: { ...doc, metadata: { ...doc.metadata, libraries, functionalities: functionality, orchestrations } }, updatedAt: new Date().toISOString()})} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs"><Save size={13}/> Save</button>
     </header>
-    <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px bg-[var(--skipo-border-color)]/20 overflow-hidden">
-      <section className="overflow-auto p-4 bg-[var(--skipo-bg)]">
+    <div ref={containerRef} className="flex-1 relative overflow-hidden bg-[var(--skipo-bg)] select-none">
+      <section style={{ position: 'absolute', left: 0, top: 0, width: `${splitX}%`, height: `${splitY}%` }} className="p-4 overflow-auto bg-[var(--skipo-bg)] border-r border-b border-[var(--skipo-border-color)]/20">
         <h3 className="font-black text-xs mb-3 flex items-center gap-2"><Layers3 size={14}/> Service metadata</h3>
         <div className="space-y-2">
           <label className="block text-[10px]">Name<input className={input} value={doc.service.name} onChange={e => update({name:e.target.value})}/></label>
@@ -58,22 +87,40 @@ export const ServiceEditor: React.FC<{
           {!validation.isValid && <div className="mt-3 rounded border border-[var(--skipo-danger)]/30 p-2 text-[9px] text-[var(--skipo-danger)]">{validation.errors.map(error => <div key={error}>• {error}</div>)}</div>}
         </div>
       </section>
-      <section className="overflow-auto p-4 bg-[var(--skipo-bg)]">
+      <section style={{ position: 'absolute', left: `${splitX}%`, top: 0, width: `${100 - splitX}%`, height: `${splitY}%` }} className="p-4 overflow-auto bg-[var(--skipo-bg)] border-b border-[var(--skipo-border-color)]/20">
         <div className="flex items-center justify-between mb-3"><h3 className="font-black text-xs flex items-center gap-2"><Package size={14}/> Imported libraries</h3><span className="text-[9px]">available to all functionalities & orchestrations</span></div>
         <div className="grid grid-cols-2 gap-2">{libraries.map(lib => <div key={lib} className="p-3 rounded border border-[var(--skipo-border-color)]/30 bg-[var(--skipo-surface)] text-xs font-bold">{lib}{lib === '@ultrst-armada/gutts' && <div className="text-[9px] font-normal text-[var(--skipo-text-muted)] mt-1">default import</div>}</div>)}</div>
         <div className="mt-3 flex gap-2"><input className={input} value={npmQuery} onChange={e=>setNpmQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&searchNpm()} placeholder="Search npm packages..."/><button onClick={searchNpm} className="px-3 rounded border text-xs">{loadingNpm?'...':'Search'}</button></div>
         {!!npmResults.length && <div className="mt-2 max-h-36 overflow-auto space-y-1">{npmResults.map(name=><button key={name} onClick={()=>addLibrary(name)} className="block w-full text-left p-2 rounded border text-[10px]">{name}</button>)}</div>}
       </section>
-      <section className="overflow-auto p-4 bg-[var(--skipo-bg)]">
+      <section style={{ position: 'absolute', left: 0, top: `${splitY}%`, width: `${splitX}%`, height: `${100 - splitY}%` }} className="p-4 overflow-auto bg-[var(--skipo-bg)] border-r border-[var(--skipo-border-color)]/20">
         <div className="flex items-center justify-between mb-3"><h3 className="font-black text-xs flex items-center gap-2"><GitBranch size={14}/> Functionalities</h3><button onClick={()=>setShowFunctionDialog(true)} className="p-1.5 rounded bg-[var(--skipo-accent)] text-black"><Plus size={14}/></button></div>
         <div className="grid grid-cols-2 gap-2">{functionality.map(f=><div key={f.id} className={card}><div className="font-bold text-xs">{f.name}</div><div className="text-[9px] mt-1">{f.description}</div><div className="text-[8px] mt-2 text-[var(--skipo-text-muted)]">{f.inputSignature} → {f.outputSignature}</div><div className="text-[8px] mt-1">{f.tags.join(' · ')}</div></div>)}</div>
         {!functionality.length && <div className="text-[10px] text-[var(--skipo-text-muted)]">No functionalities yet. Use + to define the service API.</div>}
       </section>
-      <section className="overflow-auto p-4 bg-[var(--skipo-bg)]">
+      <section style={{ position: 'absolute', left: `${splitX}%`, top: `${splitY}%`, width: `${100 - splitX}%`, height: `${100 - splitY}%` }} className="p-4 overflow-auto bg-[var(--skipo-bg)]">
         <div className="flex items-center justify-between mb-3"><h3 className="font-black text-xs">Orchestrations</h3><button disabled={functionality.length < 2} onClick={()=>setShowOrchestrationDialog(true)} className="p-1.5 rounded bg-[var(--skipo-accent)] text-black disabled:opacity-30 disabled:cursor-not-allowed"><Plus size={14}/></button></div>
         <div className="text-[9px] text-[var(--skipo-text-muted)] mb-2">{functionality.length < 2 ? 'Add at least two functionalities to enable orchestration creation.' : 'Compose existing functionalities into a service orchestration.'}</div>
         <div className="grid grid-cols-2 gap-2">{orchestrations.map(o=><div key={o.id} className={card}><div className="font-bold text-xs">{o.name}</div><div className="text-[9px]">{o.description}</div><div className="text-[8px] mt-1">{o.functionalityIds.length} functionalities</div></div>)}</div>
       </section>
+
+      {/* Vertical Splitter */}
+      <div
+        onMouseDown={() => setDragging('x')}
+        style={{ left: `${splitX}%`, top: 0, width: '8px', transform: 'translateX(-4px)' }}
+        className="absolute h-full cursor-col-resize hover:bg-[var(--skipo-accent)]/40 z-20 flex items-center justify-center transition-colors group"
+      >
+        <div className="w-1 h-12 bg-[var(--skipo-border-color)]/60 group-hover:bg-[var(--skipo-accent)] rounded-full"></div>
+      </div>
+
+      {/* Horizontal Splitter */}
+      <div
+        onMouseDown={() => setDragging('y')}
+        style={{ top: `${splitY}%`, left: 0, height: '8px', transform: 'translateY(-4px)' }}
+        className="absolute w-full cursor-row-resize hover:bg-[var(--skipo-accent)]/40 z-20 flex items-center justify-center transition-colors group"
+      >
+        <div className="h-1 w-12 bg-[var(--skipo-border-color)]/60 group-hover:bg-[var(--skipo-accent)] rounded-full"></div>
+      </div>
     </div>
     {showFunctionDialog && <FunctionDialog onClose={()=>setShowFunctionDialog(false)} onCreate={f=>{setFunctionality(p=>[...p,{...f,id:'fn-'+Date.now().toString(36)}]);setShowFunctionDialog(false)}}/>}
     {showOrchestrationDialog && <OrchestrationDialog functions={functionality} onClose={()=>setShowOrchestrationDialog(false)} onCreate={o=>{setOrchestrations(p=>[...p,{...o,id:'orch-'+Date.now().toString(36)}]);setShowOrchestrationDialog(false)}}/>}

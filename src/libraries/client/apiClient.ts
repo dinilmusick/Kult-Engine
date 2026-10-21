@@ -68,6 +68,22 @@ export const apiClient = {
     return res.json();
   },
 
+  async getSrklBackblazeAccounts(userId?: string) {
+    const headers: Record<string, string> = {};
+    if (userId) headers['x-user-id'] = userId;
+    const res = await wrappedFetch('/api/srkl/backblaze/accounts', { headers });
+    return res.json();
+  },
+
+  async listSrklBackblazeBuckets(account: Record<string, unknown>) {
+    const res = await wrappedFetch('/api/srkl/backblaze/buckets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(account),
+    });
+    return res.json();
+  },
+
   async getStorageConnections(userId?: string) {
     const headers: Record<string, string> = {};
     if (userId) headers['x-user-id'] = userId;

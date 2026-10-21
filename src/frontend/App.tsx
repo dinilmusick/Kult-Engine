@@ -104,6 +104,7 @@ export function App() {
 
   return (
     <KultWorkspace
+      onOpenServices={() => setShowServices(true)}
       onLogout={() => {
         setToken(null); setUserId(null); setActiveWorkspaceId(null);
         localStorage.removeItem('kultAuthToken'); localStorage.removeItem('kultUserId');

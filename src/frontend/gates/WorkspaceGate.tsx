@@ -37,12 +37,11 @@ export const WorkspaceGate: React.FC<WorkspaceGateProps> = ({
         if (onCreateWorkspace) {
           await onCreateWorkspace(input);
         } else {
-          await apiClient.createWorkspace('system', input);
+          await apiClient.createWorkspace('system', input as Record<string, unknown>);
         }
       }}
       onDeleteWorkspace={onDeleteWorkspace}
       onLogout={onLogout}
-      appName={appName}
       mode="working-workspace"
     />
   );

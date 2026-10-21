@@ -175,7 +175,7 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     const { discoverKloksAssets } = await import('../../libraries/services/assetDiscovery');
     return jsonRes({ success: true, services: discoverKloksAssets().filter((a: any) => a.category === 'services') });
   }
-  const copyMatch = pathname.match(/^\\/api\\/kult\\/kloks\\/services\\/([^/]+)\\/copy$/);
+  const copyMatch = pathname.match(/^\/api\/kult\/kloks\/services\/([^/]+)\/copy$/);
   if (copyMatch && method === 'POST') {
     return jsonRes({ success: false, status: 501, error: 'KLOKS local copy requires repository materialization; use the authenticated promotion/import workflow.' }, 501);
   }

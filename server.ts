@@ -31,6 +31,7 @@ async function startServer() {
     // WebContainers require cross-origin isolation (SharedArrayBuffer).
     res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
     // API routes → universal fetchHandler via adaptNodeRequest
     if (url.startsWith('/api/') || url === '/api' || url.startsWith('/health')) {

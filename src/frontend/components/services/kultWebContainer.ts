@@ -62,7 +62,7 @@ export async function runInWebContainer(
     env: {
       KULT_TEST_INPUT: JSON.stringify(input),
       KULT_TARGET: String(targetIndex),
-      KULT_TEST_MODE: 'functionality',
+      KULT_TEST_MODE: options.mode || 'functionality',\n      KULT_ORCHESTRATION_IDS: JSON.stringify(options.orchestrationIds || []),
     },
   });
   const outputPromise = collectOutput(run);

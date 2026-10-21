@@ -81,7 +81,10 @@ export async function getWorkspaces(identifier: string, env: any = {}) {
 export async function createWorkspace(identifier: string, input: any = {}, env: any = {}) {
   const row = await findUser(identifier, env);
   if (!row) return { success: false, status: 404, error: 'User not found.' };
-  if (input.storageProvider === 'backblaze_b2' && !input.b2BucketName) return { success: false, status: 400, error: 'A Backblaze B2 bucket must be selected.' };
+  const provider = input.storageProvider || input.storageConfig?.provider;
+  const bucket = input.b2BucketName || input.storageConfig?.bucketName;
+  if (provider === 'backblaze_b2' && !bucket) return { success: false, status: 400, error: 'A Backblaze B2 bucket must be selected.' };
+  if (provider === 'backblaze_b2') input = { ...input, storageProvider: 'backblaze_b2', b2BucketName: bucket, storageConnectionId: input.storageConnectionId || input.storageConfig?.connectionId };
   const workspace = normalize(input); const workspaces = await saveWorkspaces(row, [...workspaceList(row), workspace], env);
   return { success: true, status: 201, workspace, workspaces };
 }

@@ -8,7 +8,6 @@ import React, { useState, useEffect } from "react";
 import type { WorkspaceRecord } from "@ultrst-armada/floks/ui";
 import { LoginGate } from "./gates/LoginGate";
 import { WorkspaceGate } from "./gates/WorkspaceGate";
-import { KultWorkspace } from "./components/workspace/KultWorkspace";
 import { ServicesWorkspace } from "./components/services/ServicesWorkspace";
 import type { LocalServiceRecord } from "./components/services/LocalServicesMenu";
 import { STARTER_SERVICES } from "../libraries/services/starterServices";
@@ -56,10 +55,13 @@ export function App() {
     }
   };
 
-  const handleSelectWorkspace = (ws: WorkspaceRecord) => {
+  const handleSelectWorkspace = async (ws: WorkspaceRecord) => {
     setActiveWorkspaceId(ws.id);
     setActiveWorkspace(ws as any);
-    loadWorkspace(ws.id);
+    await loadWorkspace(ws.id);
+    // The new Kult workspace flow opens the Services tile menu directly.
+    // Do not route through the legacy KultWorkspace authoring UI.
+    setShowServices(true);
   };
 
   const handleCreateWorkspace = async (input: { name: string; workspacePath?: string; storageConfig?: any }) => {
@@ -71,6 +73,7 @@ export function App() {
       setActiveWorkspaceId(created.id);
       setActiveWorkspace(created);
       await loadWorkspace(created.id);
+      setShowServices(true);
     } catch (error) {
       console.error("Failed to create workspace", error);
       throw error;
@@ -164,18 +167,9 @@ export function App() {
     );
   }
 
-  return (
-    <KultWorkspace
-      onOpenServices={() => setShowServices(true)}
-      onLogout={() => {
-        setToken(null);
-        setUserId(null);
-        setActiveWorkspaceId(null);
-        localStorage.removeItem("kultAuthToken");
-        localStorage.removeItem("kultUserId");
-      }}
-    />
-  );
+  // Legacy KultWorkspace is intentionally not rendered in the new Kult flow.
+  // After workspace selection, ServicesWorkspace is the workspace landing screen.
+  return null;
 }
 
 export default App;

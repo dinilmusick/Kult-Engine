@@ -70,10 +70,10 @@ export function App() {
       const res = await apiClient.createWorkspace(userId, input);
       const created = res.workspace || { id: `ws-${Date.now()}`, name: input.name, workspacePath: input.workspacePath || "/workspace" };
       setWorkspaces((prev) => [...prev, created]);
-      setActiveWorkspaceId(created.id);
-      setActiveWorkspace(created);
-      await loadWorkspace(created.id);
-      setShowServices(true);
+      // Workspace creation does not enter the workspace. The user must explicitly select it.
+      setActiveWorkspaceId(null);
+      setActiveWorkspace(null);
+      setShowServices(false);
     } catch (error) {
       console.error("Failed to create workspace", error);
       throw error;
@@ -120,10 +120,14 @@ export function App() {
         onSelectWorkspace={handleSelectWorkspace}
         onCreateWorkspace={handleCreateWorkspace}
         onDeleteWorkspace={handleDeleteWorkspace}
+        userId={userId}
         onLogout={() => {
           setToken(null);
           setUserId(null);
           setActiveWorkspaceId(null);
+          setActiveWorkspace(null);
+          setShowServices(false);
+          setLocalServices([]);
           localStorage.removeItem("kultAuthToken");
           localStorage.removeItem("kultUserId");
         }}

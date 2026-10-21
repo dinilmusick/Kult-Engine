@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { listBackblazeBuckets } from './kultWorkspaceService';
+import { listBackblazeBuckets, getWorkspaces } from './kultWorkspaceService';
 
 describe('Kult workspace storage', () => {
   it('rejects a Backblaze connection without credentials', async () => {
@@ -9,4 +9,12 @@ describe('Kult workspace storage', () => {
     assert.equal(result.status, 400);
     assert.deepEqual(result.buckets, []);
   });
+});
+
+it('requires a real Backblaze bucket for cloud workspace creation', async () => {
+  const result = await import('./kultWorkspaceService').then(({ createWorkspace }) => createWorkspace('missing-user', {
+    name: 'Cloud',
+    storageProvider: 'backblaze_b2',
+  }, {}));
+  assert.equal(result.success, false);
 });

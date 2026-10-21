@@ -61,7 +61,8 @@ async function saveWorkspaces(row: any, workspaces: KultWorkspace[], env: any) {
 }
 
 function normalize(input: any, existing?: KultWorkspace): KultWorkspace {
-  const provider: WorkspaceStorageProvider = input.storageProvider === 'backblaze_b2' ? 'backblaze_b2' : 'local_fs';
+  const requestedProvider = input.storageProvider || input.storageConfig?.provider;
+  const provider: WorkspaceStorageProvider = requestedProvider === 'backblaze_b2' || requestedProvider === 'backblaze' ? 'backblaze_b2' : 'local_fs';
   const id = existing?.id || input.id || ('ws_' + Date.now().toString(36));
   return { id, name: String(input.name || existing?.name || 'New Workspace').trim(), description: input.description ?? existing?.description,
     engine: provider === 'backblaze_b2' ? 'object_storage' : 'local_fs', workspacePath: input.workspacePath || existing?.workspacePath || ('data/workspaces/' + id),

@@ -106,6 +106,9 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   }
 
   // 2.5 SRKL Backblaze federation used by workspace creation
+  if (pathname === '/api/srkl/backblaze/accounts' && method === 'GET') {
+    return jsonRes(await DepmBackend.services.srkl.getSrklAccounts(getUserId(request, url), 'backblaze', env));
+  }
   if (pathname === '/api/srkl/backblaze/buckets' && method === 'POST') {
     return jsonRes(await DepmBackend.services.srkl.listBackblazeBuckets(await parseBody(request)));
   }

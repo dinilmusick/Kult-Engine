@@ -14,19 +14,29 @@ export interface LoginGateProps {
   onSuccess: (result: AuthResult) => void;
 }
 
-export const LoginGate: React.FC<LoginGateProps> = ({ appName = 'SKIPO APP', onSuccess }) => {
+export const LoginGate: React.FC<LoginGateProps> = ({ appName = 'KULT ENGINE', onSuccess }) => {
   return (
     <AuthPage
       appName={appName}
-      appSubtitle="CANONICAL AUTH"
-      footerText="Powered by @ultrst-armada/floks & @ultrst-armada/kloks"
+      appSubtitle="APPLICATION COMPONENT FORGE"
+      footerText="Ultrst Armada • Governed by Skipo"
       onLogin={async (email, password) => {
         const data = await apiClient.login(email, password);
-        return { success: Boolean(data?.success && data?.user), error: data?.error, user: data?.user, token: data?.token };
+        return {
+          success: Boolean(data?.success && data?.user),
+          error: data?.error,
+          user: data?.user,
+          token: data?.token,
+        };
       }}
       onRegister={async ({ name, email, password }) => {
         const data = await apiClient.register({ name, email, password });
-        return { success: Boolean(data?.success && data?.user), error: data?.error, user: data?.user, token: data?.token };
+        return {
+          success: Boolean(data?.success && data?.user),
+          error: data?.error,
+          user: data?.user,
+          token: data?.token,
+        };
       }}
       onSuccess={onSuccess}
     />

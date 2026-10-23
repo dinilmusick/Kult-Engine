@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import type { WorkspaceRecord } from "@ultrst-armada/floks/ui";
+import { SkipoThemeProvider, BottomStripProvider, type WorkspaceRecord } from "@ultrst-armada/floks/ui";
 import { LoginGate } from "./gates/LoginGate";
 import { WorkspaceGate } from "./gates/WorkspaceGate";
 import { ServicesWorkspace } from "./components/services/ServicesWorkspace";
@@ -112,85 +112,77 @@ export function App() {
     if (activeWorkspaceId === id) setActiveWorkspaceId(null);
   };
 
-  if (!token) {
-    return (
-      <LoginGate
-        appName="Kult Engine"
-        onSuccess={(res) => {
-          if (!res.token || !res.user) return;
-          setToken(res.token);
-          setUserId(res.user.id);
-          localStorage.setItem("kultAuthToken", res.token);
-          localStorage.setItem("kultUserId", res.user.id);
-        }}
-      />
-    );
-  }
-
-  if (!activeWorkspaceId) {
-    return (
-      <WorkspaceGate
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-        onSelectWorkspace={handleSelectWorkspace}
-        onCreateWorkspace={handleCreateWorkspace}
-        onDeleteWorkspace={handleDeleteWorkspace}
-        userId={userId}
-        onLogout={() => {
-          setToken(null);
-          setUserId(null);
-          setActiveWorkspaceId(null);
-          setActiveWorkspace(null);
-          setShowServices(false);
-          setLocalServices([]);
-          localStorage.removeItem("kultAuthToken");
-          localStorage.removeItem("kultUserId");
-        }}
-      />
-    );
-  }
-
-  if (showServices) {
-    return (
-      <ServicesWorkspace
-        services={localServices}
-        onBack={() => {
-          setShowServices(false);
-          setActiveWorkspaceId(null);
-          setActiveWorkspace(null);
-        }}
-        onCopyLocal={handleCopyKloksService}
-        onCreate={() => {
-          const document = {
-            ...STARTER_SERVICES[0],
-            service: { ...STARTER_SERVICES[0].service, id: "local." + Date.now().toString(36), name: "New Local Service", description: "" },
-            nodes: [], edges: [], assets: [], tests: [],
-            metadata: { author: userId || "local", libraries: ["@ultrst-armada/gutts"], functionalities: [], orchestrations: [] }
-          };
-          const created: LocalServiceRecord = {
-            id: document.service.id,
-            folder: document.service.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-            document,
-            updatedAt: new Date().toISOString()
-          };
-          setLocalServices(prev => [...prev, created]);
-          if (activeWorkspaceId) {
-            void fetch("/api/db/workspace", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
-              body: JSON.stringify({ workspaceId: activeWorkspaceId, services: [...localServices, created] })
-            });
-          }
-        }}
-        onSave={handleSaveLocalService}
-        userId={userId}
-      />
-    );
-  }
-
-  // Legacy KultWorkspace is intentionally not rendered in the new Kult flow.
-  // After workspace selection, ServicesWorkspace is the workspace landing screen.
-  return null;
+  return (
+    <SkipoThemeProvider defaultTheme="dark">
+      <BottomStripProvider>
+        {!token ? (
+          <LoginGate
+            appName="Kult Engine"
+            onSuccess={(res) => {
+              if (!res.token || !res.user) return;
+              setToken(res.token);
+              setUserId(res.user.id);
+              localStorage.setItem("kultAuthToken", res.token);
+              localStorage.setItem("kultUserId", res.user.id);
+            }}
+          />
+        ) : !activeWorkspaceId ? (
+          <WorkspaceGate
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId}
+            onSelectWorkspace={handleSelectWorkspace}
+            onCreateWorkspace={handleCreateWorkspace}
+            onDeleteWorkspace={handleDeleteWorkspace}
+            userId={userId}
+            onLogout={() => {
+              setToken(null);
+              setUserId(null);
+              setActiveWorkspaceId(null);
+              setActiveWorkspace(null);
+              setShowServices(false);
+              setLocalServices([]);
+              localStorage.removeItem("kultAuthToken");
+              localStorage.removeItem("kultUserId");
+            }}
+          />
+        ) : showServices ? (
+          <ServicesWorkspace
+            services={localServices}
+            onBack={() => {
+              setShowServices(false);
+              setActiveWorkspaceId(null);
+              setActiveWorkspace(null);
+            }}
+            onCopyLocal={handleCopyKloksService}
+            onCreate={() => {
+              const document = {
+                ...STARTER_SERVICES[0],
+                service: { ...STARTER_SERVICES[0].service, id: "local." + Date.now().toString(36), name: "New Local Service", description: "" },
+                nodes: [], edges: [], assets: [], tests: [],
+                metadata: { author: userId || "local", libraries: ["@ultrst-armada/gutts"], functionalities: [], orchestrations: [] }
+              };
+              const created: LocalServiceRecord = {
+                id: document.service.id,
+                folder: document.service.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+                document,
+                updatedAt: new Date().toISOString()
+              };
+              setLocalServices(prev => [...prev, created]);
+              if (activeWorkspaceId) {
+                void fetch("/api/db/workspace", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
+                  body: JSON.stringify({ workspaceId: activeWorkspaceId, services: [...localServices, created] })
+                });
+              }
+            }}
+            onSave={handleSaveLocalService}
+            userId={userId}
+          />
+        ) : null}
+      </BottomStripProvider>
+    </SkipoThemeProvider>
+  );
 }
 
 export default App;

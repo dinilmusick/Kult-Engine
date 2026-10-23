@@ -3,7 +3,8 @@ import { Play, Loader2, Terminal, CheckCircle2, XCircle } from 'lucide-react';
 import type { ServiceDocument } from '../../../libraries/types/serviceIR';
 import type { FunctionalityAsset } from './functionalityEditorModel';
 import { buildExecutionProject } from './kultExecutionModel';
-import { runInWebContainer } from './kultWebContainer';
+import { WebContainerServiceFacade } from '@ultrst-armada/kloks/development';
+import { parseExecutionResult } from './kultExecutionModel';
 
 export const ServiceTestRunner: React.FC<{
   service: ServiceDocument;
@@ -59,7 +60,7 @@ export const ServiceTestRunner: React.FC<{
         <header className="h-12 shrink-0 px-4 border-b border-[var(--skipo-border-color)]/30 flex items-center justify-between">
           <div>
             <div className="font-black text-sm">Run Service</div>
-            <div className="text-[9px] text-[var(--skipo-text-muted)]">Node.js execution inside a browser WebContainer</div>
+            <div className="text-[9px] text-[var(--skipo-text-muted)]">Node.js execution inside the canonical Kloks WebContainer service</div>
           </div>
           <button onClick={onClose} className="px-3 py-1.5 rounded border text-[10px]">Close</button>
         </header>

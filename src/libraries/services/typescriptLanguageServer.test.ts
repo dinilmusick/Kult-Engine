@@ -1,10 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import assert from 'node:assert/strict';
 import { TypeScriptLanguageServerClient } from './typescriptLanguageServer.js';
 
-describe('TypeScriptLanguageServerClient', () => {
-  it('exposes the canonical KLOKS service operations', () => {
-    expect(Object.keys(TypeScriptLanguageServerClient)).toEqual(
-      expect.arrayContaining(['start', 'request', 'notify', 'stop', 'status']),
-    );
-  });
-});
+assert.deepEqual(Object.keys(TypeScriptLanguageServerClient).sort(), ['notify', 'request', 'start', 'status', 'stop']);

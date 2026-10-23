@@ -1,5 +1,5 @@
 import { discoverKloksAssets } from './assetDiscovery';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { createRequire } from 'node:module';
 
@@ -26,7 +26,7 @@ function floksManifests(): Array<Record<string, unknown>> {
       }
     };
     const packagesRoot = join(root, 'packages');
-    walk(packagesRoot);
+    walk(existsSync(packagesRoot) ? packagesRoot : root);
     return manifests;
   } catch { return []; }
 }

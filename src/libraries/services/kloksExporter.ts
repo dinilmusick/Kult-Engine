@@ -46,7 +46,11 @@ export function generateKloksArtifact(doc: ServiceDocument): KloksGeneratedArtif
       },
       dependencies: {
         '@ultrst-armada/krnl': '^1.0.2',
-        '@ultrst-armada/kloks': '^1.4.2',
+        '@ultrst-armada/kloks': '^1.5.2',
+      },
+      devDependencies: {
+        typescript: '^5.7.3',
+        vitest: '^3.1.0',
       },
     },
     null,

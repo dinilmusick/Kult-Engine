@@ -25,7 +25,8 @@ function floksManifests(): Array<Record<string, unknown>> {
         }
       }
     };
-    walk(root);
+    const packagesRoot = join(root, 'packages');
+    walk(packagesRoot);
     return manifests;
   } catch { return []; }
 }

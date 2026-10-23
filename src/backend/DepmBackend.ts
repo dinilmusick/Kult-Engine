@@ -9,6 +9,7 @@ import { validateServiceDocument } from "../libraries/services/graphValidator";
 import { generateKloksArtifact } from "../libraries/services/kloksExporter";
 import { STARTER_SERVICES } from "../libraries/services/starterServices";
 import type { ServiceDocument } from "../libraries/types/serviceIR";
+import { skipoAgentService } from '../libraries/services/skipoAgent';
 import {
   loginUser as loginKultUser,
   getWorkspaces as getKultWorkspaces,
@@ -49,6 +50,7 @@ function toLocalServiceRecord(document: any) {
 
 export const DepmBackend = {
   services: {
+    skipoAgent: skipoAgentService,
     auth: {
       async loginUser(email = "", password = "", _isAdmin = false, env: any = {}) { return loginKultUser(email, password, env); },
       async getUsers(env: any = {}) {

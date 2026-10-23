@@ -4,6 +4,7 @@ import type { ServiceDocument } from '../../../libraries/types/serviceIR';
 import type { LocalServiceRecord } from './LocalServicesMenu';
 import { validateServiceEditor } from './serviceEditorModel';
 import { FunctionalityEditor } from './FunctionalityEditor';
+import { validateKultService } from '../../../libraries/services/codeValidation';
 import { ServiceTestRunner } from './ServiceTestRunner';
 import {
   createFunctionalityAsset,
@@ -43,6 +44,8 @@ export const ServiceEditor: React.FC<{
   const [showFunctionDialog, setShowFunctionDialog] = React.useState(false);
   const [showOrchestrationDialog, setShowOrchestrationDialog] = React.useState(false);
   const [showTestRunner, setShowTestRunner] = React.useState(false);
+  const [validationResult, setValidationResult] = React.useState<any>(null);
+  const [validating, setValidating] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [splitX, setSplitX] = React.useState(50);
   const [splitY, setSplitY] = React.useState(50);
@@ -73,6 +76,13 @@ export const ServiceEditor: React.FC<{
     orchestrations,
   });
 
+  const validate = async () => {
+    setValidating(true);
+    try { setValidationResult(await validateKultService({ ...doc, metadata: { ...doc.metadata, libraries, functionalities, orchestrations } })); }
+    catch (error: any) { setValidationResult({ ok: false, error: error?.message || 'Validation failed' }); }
+    finally { setValidating(false); }
+  };
+
   const save = () => onSave({
     ...service,
     folder,
@@ -89,7 +99,7 @@ export const ServiceEditor: React.FC<{
         <button onClick={onBack} className="p-1.5 rounded hover:bg-[var(--skipo-bg)]"><ArrowLeft size={15}/></button>
         <div><div className="font-black">{doc.service.name}</div><div className="text-[9px] text-[var(--skipo-text-muted)]">{service.folder}/</div></div>
       </div>
-      <div className="flex items-center gap-2"><button onClick={()=>setShowTestRunner(true)} disabled={!functionalities.length} className="flex items-center gap-1 px-3 py-1.5 rounded border text-xs disabled:opacity-40"><Play size={13}/> Test</button><button disabled={!validation.isValid} onClick={save} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs disabled:opacity-40"><Save size={13}/> Save</button></div>
+      <div className="flex items-center gap-2"><button onClick={validate} disabled={validating} className="flex items-center gap-1 px-3 py-1.5 rounded border text-xs disabled:opacity-40"><Code2 size={13}/> {validating ? 'Validate…' : 'Validate'}</button><button onClick={()=>setShowTestRunner(true)} disabled={!functionalities.length} className="flex items-center gap-1 px-3 py-1.5 rounded border text-xs disabled:opacity-40"><Play size={13}/> Test</button><button disabled={!validation.isValid} onClick={save} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs disabled:opacity-40"><Save size={13}/> Save</button></div>
     </header>
 
     <div ref={containerRef} className="flex-1 relative overflow-hidden bg-[var(--skipo-bg)] select-none">
@@ -136,6 +146,7 @@ export const ServiceEditor: React.FC<{
       <div onMouseDown={()=>setDragging('y')} style={{top:`${splitY}%`,left:0,height:'8px',transform:'translateY(-4px)'}} className="absolute w-full cursor-row-resize hover:bg-[var(--skipo-accent)]/40 z-20 flex items-center justify-center"><div className="h-1 w-12 bg-[var(--skipo-border-color)]/60 rounded-full"/></div>
     </div>
 
+    {validationResult&&<div className="fixed right-4 top-16 z-50 w-[420px] rounded border border-[var(--skipo-border-color)] bg-[var(--skipo-surface)] p-3 shadow-2xl"><div className="font-black text-xs">Validation {validationResult.ok ? 'passed' : 'failed'}</div><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap text-[9px]">{JSON.stringify(validationResult, null, 2)}</pre><button onClick={()=>setValidationResult(null)} className="mt-2 rounded border px-2 py-1 text-[9px]">Close</button></div>}
     {showFunctionDialog&&<FunctionDialog onClose={()=>setShowFunctionDialog(false)} onCreate={fn=>{setFunctionalities(prev=>[...prev,fn]);setShowFunctionDialog(false)}}/>}
     {showOrchestrationDialog&&<OrchestrationDialog functions={functionalities} onClose={()=>setShowOrchestrationDialog(false)} onCreate={o=>{setOrchestrations(prev=>[...prev,{...o,id:'orch-'+Date.now().toString(36)}]);setShowOrchestrationDialog(false)}}/>}
     {editingFunctionality&&<FunctionalityEditor functionality={editingFunctionality} onClose={()=>setEditingFunctionality(null)} onSave={fn=>{setFunctionalities(prev=>prev.map(item=>item.id===fn.id?fn:item));setEditingFunctionality(null)}}/>}

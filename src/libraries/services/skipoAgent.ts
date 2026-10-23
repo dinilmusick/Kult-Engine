@@ -34,7 +34,7 @@ export class SkipoAgentService {
   inspect() {
     return {
       app: { name: 'Kult-Engine', runtime: 'skipo', selfEvolution: false },
-      capabilities: ['inspect-assets', 'suggest-service-promotion', 'suggest-ui-promotion', 'validate-before-promotion', 'handoff-to-krusbl'],
+      capabilities: ['inspect-assets', 'suggest-service-promotion', 'suggest-ui-promotion', 'validate-before-promotion', 'code-validation-diagnostics', 'handoff-to-krusbl'],
       assets: { services: discoverKloksAssets(), ui: floksManifests().flatMap((m) => Array.isArray(m.components) ? m.components : []) },
     };
   }

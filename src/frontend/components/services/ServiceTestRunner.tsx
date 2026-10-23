@@ -37,16 +37,28 @@ export const ServiceTestRunner: React.FC<{
 
       const project = buildExecutionProject(service, functionalities, targetId);
       const targetIndex = Math.max(0, functionalities.findIndex(item => item.id === targetId));
-      const execution = await runInWebContainer(
-        project,
-        parsed,
-        targetIndex,
-        mode === 'service'
-          ? { mode, functionalityIds: selectedOrchestration?.functionalityIds || [] }
-          : { mode },
-      );
-      setLogs(execution.output);
-      setResult(execution.result);
+      await WebContainerServiceFacade.execute('mount', { files: project.files });
+      const install = await WebContainerServiceFacade.execute<{ command: string; args?: string[] }, { exitCode: number; output: string }>('runCommand', {
+        command: 'npm',
+        args: ['install', '--no-audit', '--no-fund'],
+      });
+      if (install && install.exitCode !== 0) {
+        setLogs(install.output);
+        setResult({ ok: false, error: 'Dependency installation failed.\n' + install.output });
+        return;
+      }
+      const execution = await WebContainerServiceFacade.execute<{ command: string; args?: string[]; env?: Record<string, string> }, { exitCode: number; output: string }>('runCommand', {
+        command: project.command[0],
+        args: project.command.slice(1),
+        env: {
+          KULT_TEST_INPUT: JSON.stringify(parsed),
+          KULT_TARGET: String(targetIndex),
+          KULT_TEST_MODE: mode || 'functionality',
+          KULT_FUNCTIONALITY_IDS: JSON.stringify(selectedOrchestration?.functionalityIds || []),
+        },
+      });
+      setLogs(execution?.output || '');
+      setResult(parseExecutionResult(execution?.output || ''));
     } catch (error) {
       setResult({ ok: false, error: error instanceof Error ? error.message : String(error) });
     } finally {

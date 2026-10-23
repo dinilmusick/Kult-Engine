@@ -6,6 +6,7 @@ import {
   AudioHardwareServiceFacade,
   AuthServiceFacade,
 } from '@ultrst-armada/kloks';
+import { skipoAgentService } from '../libraries/services/skipoAgent';
 
 export const services = {
   audioHardware: AudioHardwareServiceFacade,

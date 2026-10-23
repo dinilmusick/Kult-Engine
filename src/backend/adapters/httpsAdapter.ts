@@ -162,6 +162,15 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     if (method === 'GET') return jsonRes(DepmBackend.services.routes.getAllRoutes());
     if (method === 'POST') return jsonRes(DepmBackend.services.routes.upsertRoute(await parseBody(request)));
   }
+  if (pathname === '/api/skipo-agent/context' && method === 'GET') {
+    return jsonRes(DepmBackend.services.skipoAgent.inspect());
+  }
+  if (pathname === '/api/skipo-agent/suggest' && method === 'GET') {
+    return jsonRes({ suggestions: DepmBackend.services.skipoAgent.suggest(url.searchParams.get('q') || '') });
+  }
+  if (pathname === '/api/skipo-agent/promotion-plan' && method === 'POST') {
+    return jsonRes(DepmBackend.services.skipoAgent.promotionPlan(await parseBody(request)));
+  }
   if (pathname === '/api/kult/npm/search' && method === 'GET') {
     const q = url.searchParams.get('q') || '';
     if (!q.trim()) return jsonRes({ success: true, packages: [] });

@@ -21,7 +21,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@tailwindcss/vite": "^4.1.14",
     "@ultrst-armada/floks": "^1.2.4",
-    "@ultrst-armada/kloks": "^1.5.1",
+    "@ultrst-armada/kloks": "^1.5.2",
     "@ultrst-armada/krnl": "^1.0.1",
     "@vitejs/plugin-react": "^5.0.4",
     "@xyflow/react": "^12.11.1",

@@ -3,6 +3,7 @@ import { validateServiceDocument } from './graphValidator';
 import { generateKloksArtifact } from './kloksExporter';
 import type { ServiceDocument } from '../types/serviceIR';
 
+/** Shared authoring gate: semantic IR validation plus WebContainer diagnostics. */
 export interface KultValidationResult {
   semantic: ReturnType<typeof validateServiceDocument>;
   code: CodeValidationResult;

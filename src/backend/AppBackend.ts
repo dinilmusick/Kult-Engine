@@ -10,6 +10,7 @@ import {
 export const services = {
   audioHardware: AudioHardwareServiceFacade,
   auth: AuthServiceFacade,
+  skipoAgent: skipoAgentService,
 };
 
 export const AppBackend = {

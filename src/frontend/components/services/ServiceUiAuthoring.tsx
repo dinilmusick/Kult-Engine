@@ -2,7 +2,7 @@ import React from 'react';
 import { UIAuthoringServiceFacade } from '@ultrst-armada/kloks/services';
 import { listComponentContracts } from '@ultrst-armada/floks/contracts';
 import { UiAuthoringWorkspace } from '@ultrst-armada/floks/canvas-ui';
-import type { UIAuthoringSession, UIValidationResult } from '@ultrst-armada/kloks/contracts';
+import type { UIAuthoringSession, UIAuthoringValidation } from '@ultrst-armada/kloks/contracts';
 import type { FunctionalityAsset } from './functionalityEditorModel';
 import { buildServiceAuthoringOperations } from './serviceUiAuthoringModel';
 
@@ -47,10 +47,7 @@ export function ServiceUiAuthoring(props: {
 
   const validate = async () => {
     if (!session) return;
-    const result = await UIAuthoringServiceFacade.execute<
-      { sessionId: string },
-      UIValidationResult
-    >('validate', { sessionId: session.sessionId });
+    const result = await UIAuthoringServiceFacade.execute<{ sessionId: string }, UIAuthoringValidation>('validate', { sessionId: session.sessionId });
     setStatus(result.valid ? 'Validation passed' : result.errors.join(' · '));
   };
 

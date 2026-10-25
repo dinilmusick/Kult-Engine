@@ -20,8 +20,8 @@
     "@aws-sdk/client-s3": "^3.1136.0",
     "@neondatabase/serverless": "^1.1.0",
     "@tailwindcss/vite": "^4.1.14",
-    "@ultrst-armada/floks": "^1.4.0",
-    "@ultrst-armada/kloks": "^1.8.0",
+    "@ultrst-armada/floks": "^1.5.0",
+    "@ultrst-armada/kloks": "^1.9.0",
     "@ultrst-armada/krnl": "^1.0.1",
     "@vitejs/plugin-react": "^5.0.4",
     "@xyflow/react": "^12.11.1",
@@ -43,11 +43,5 @@
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "@ultrst-armada/kloks": "file:../Kloks",
-      "@ultrst-armada/floks": "file:../Floks"
-    }
   }
 }

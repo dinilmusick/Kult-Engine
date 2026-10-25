@@ -24,3 +24,5 @@ describe('service UI authoring model', () => {
     });
   });
 });
+
+// Registry propagation verification: consume released Kloks/Floks packages.

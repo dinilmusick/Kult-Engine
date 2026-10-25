@@ -1,17 +1,17 @@
 /**
  * @file MonacoCodeViewer.tsx
- * @description Reusable Monaco code and JSON syntax highlighter component.
+ * @description Reusable Monaco code and JSON syntax highlighter backed by FLOKS/KLOKS IDE infrastructure.
  */
 
 import React from 'react';
-import Editor from '@monaco-editor/react';
+import { MonacoEditor } from '@ultrst-armada/floks/canvas-ui';
 
 interface MonacoCodeViewerProps {
   value: string;
   language?: string;
   readOnly?: boolean;
   height?: string;
-  onChange?: (value: string | undefined) => void;
+  onChange?: (value: string) => void;
 }
 
 export const MonacoCodeViewer: React.FC<MonacoCodeViewerProps> = ({
@@ -20,27 +20,18 @@ export const MonacoCodeViewer: React.FC<MonacoCodeViewerProps> = ({
   readOnly = true,
   height = '100%',
   onChange,
-}) => {
-  return (
-    <div className="w-full h-full overflow-hidden rounded border border-[var(--skipo-border-color)]/30 bg-[#1e1e1e]">
-      <Editor
-        height={height}
-        language={language}
-        theme="vs-dark"
-        value={value}
-        onChange={onChange}
-        options={{
-          readOnly,
-          minimap: { enabled: false },
-          fontSize: 12,
-          fontFamily: 'JetBrains Mono, Fira Code, monospace',
-          scrollBeyondLastLine: false,
-          automaticLayout: true,
-          lineNumbers: 'on',
-          renderLineHighlight: 'all',
-          tabSize: 2,
-        }}
-      />
-    </div>
-  );
-};
+}) => (
+  <div className="w-full h-full overflow-hidden rounded border border-[var(--skipo-border-color)]/30 bg-[#1e1e1e]">
+    <MonacoEditor
+      value={value}
+      language={language}
+      theme="vs-dark"
+      readOnly={readOnly}
+      minimap={false}
+      fontSize={12}
+      height={height}
+      width="100%"
+      onChange={onChange}
+    />
+  </div>
+);

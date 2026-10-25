@@ -6,6 +6,7 @@ import { validateServiceEditor } from './serviceEditorModel';
 import { FunctionalityEditor } from './FunctionalityEditor';
 import { validateKultService } from '../../../libraries/services/codeValidation';
 import { ServiceTestRunner } from './ServiceTestRunner';
+import { ServiceUiAuthoring } from './ServiceUiAuthoring';
 import {
   createFunctionalityAsset,
   normalizeFunctionalityAsset,
@@ -44,6 +45,7 @@ export const ServiceEditor: React.FC<{
   const [showFunctionDialog, setShowFunctionDialog] = React.useState(false);
   const [showOrchestrationDialog, setShowOrchestrationDialog] = React.useState(false);
   const [showTestRunner, setShowTestRunner] = React.useState(false);
+  const [showUiAuthoring, setShowUiAuthoring] = React.useState(false);
   const [validationResult, setValidationResult] = React.useState<any>(null);
   const [validating, setValidating] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -99,7 +101,7 @@ export const ServiceEditor: React.FC<{
         <button onClick={onBack} className="p-1.5 rounded hover:bg-[var(--skipo-bg)]"><ArrowLeft size={15}/></button>
         <div><div className="font-black">{doc.service.name}</div><div className="text-[9px] text-[var(--skipo-text-muted)]">{service.folder}/</div></div>
       </div>
-      <div className="flex items-center gap-2"><button onClick={validate} disabled={validating} className="flex items-center gap-1 px-3 py-1.5 rounded border text-xs disabled:opacity-40"><Code2 size={13}/> {validating ? 'Validate…' : 'Validate'}</button><button onClick={()=>setShowTestRunner(true)} disabled={!functionalities.length} className="flex items-center gap-1 px-3 py-1.5 rounded border text-xs disabled:opacity-40"><Play size={13}/> Test</button><button disabled={!validation.isValid} onClick={save} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs disabled:opacity-40"><Save size={13}/> Save</button></div>
+      <div className="flex items-center gap-2"><button onClick={validate} disabled={validating} className="flex items-center gap-1 px-3 py-1.5 rounded border text-xs disabled:opacity-40"><Code2 size={13}/> {validating ? 'Validate…' : 'Validate'}</button><button onClick={()=>setShowUiAuthoring(true)} className="flex items-center gap-1 px-3 py-1.5 rounded border text-xs"><Layers3 size={13}/> UI</button><button onClick={()=>setShowTestRunner(true)} disabled={!functionalities.length} className="flex items-center gap-1 px-3 py-1.5 rounded border text-xs disabled:opacity-40"><Play size={13}/> Test</button><button disabled={!validation.isValid} onClick={save} className="flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--skipo-accent)] text-black font-bold text-xs disabled:opacity-40"><Save size={13}/> Save</button></div>
     </header>
 
     <div ref={containerRef} className="flex-1 relative overflow-hidden bg-[var(--skipo-bg)] select-none">
@@ -150,6 +152,7 @@ export const ServiceEditor: React.FC<{
     {showFunctionDialog&&<FunctionDialog onClose={()=>setShowFunctionDialog(false)} onCreate={fn=>{setFunctionalities(prev=>[...prev,fn]);setShowFunctionDialog(false)}}/>}
     {showOrchestrationDialog&&<OrchestrationDialog functions={functionalities} onClose={()=>setShowOrchestrationDialog(false)} onCreate={o=>{setOrchestrations(prev=>[...prev,{...o,id:'orch-'+Date.now().toString(36)}]);setShowOrchestrationDialog(false)}}/>}
     {editingFunctionality&&<FunctionalityEditor functionality={editingFunctionality} onClose={()=>setEditingFunctionality(null)} onSave={fn=>{setFunctionalities(prev=>prev.map(item=>item.id===fn.id?fn:item));setEditingFunctionality(null)}}/>}
+    {showUiAuthoring&&<ServiceUiAuthoring serviceId={doc.service.id} functionalities={functionalities} onClose={()=>setShowUiAuthoring(false)} onSave={schema=>{setDoc(prev=>({...prev,metadata:{...prev.metadata,serviceUi:schema}}));setShowUiAuthoring(false)}}/>}
     {showTestRunner&&<ServiceTestRunner service={doc} functionalities={functionalities} orchestrations={orchestrations} onClose={()=>setShowTestRunner(false)}/>} 
   </div>;
 };

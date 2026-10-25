@@ -2,7 +2,7 @@ import React from 'react';
 import { UIAuthoringServiceFacade } from '@ultrst-armada/kloks/services';
 import { listComponentContracts } from '@ultrst-armada/floks/contracts';
 import { UiAuthoringWorkspace } from '@ultrst-armada/floks/canvas-ui';
-import type { UIAuthoringSession, UIAuthoringValidation, UIComponentArtifact, ServiceUISchema } from '@ultrst-armada/kloks/contracts';
+import type { UIAuthoringSession, UIAuthoringValidation, ServiceUISchema } from '@ultrst-armada/kloks/contracts';
 import type { FunctionalityAsset } from './functionalityEditorModel';
 import { buildServiceAuthoringOperations } from './serviceUiAuthoringModel';
 
@@ -54,7 +54,7 @@ export function ServiceUiAuthoring(props: {
   const save = async () => {
     if (!session) return;
     const schema = await UIAuthoringServiceFacade.execute<{ sessionId: string }, ServiceUISchema>('generateServiceUI', { sessionId: session.sessionId });
-    const artifact = await UIAuthoringServiceFacade.execute<{ sessionId: string }, UIComponentArtifact>('generateArtifact', { sessionId: session.sessionId });
+    const artifact = await UIAuthoringServiceFacade.execute<{ sessionId: string }, Record<string, unknown>>('generateArtifact', { sessionId: session.sessionId });
     props.onSave({ schema, artifact });
     setStatus('Service UI schema saved');
   };

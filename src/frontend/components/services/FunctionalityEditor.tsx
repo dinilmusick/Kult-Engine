@@ -137,7 +137,8 @@ export const FunctionalityEditor: React.FC<{
             sessionId={`kult:${asset.id}:state`}
             ideService={MonacoIdeServiceFacade}
             onChange={value => update({ stateData: value ?? '' })}
-            options={{ minimap: { enabled: false }, automaticLayout: true, fontSize: 13 }}
+            minimap={false}
+            fontSize={13}
           />
         )}
 

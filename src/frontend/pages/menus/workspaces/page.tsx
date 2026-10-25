@@ -1,1 +1,1 @@
-export { WorkspaceGate as WorkspaceTilesMenu } from '../../gates/WorkspaceGate';
+export { WorkspaceTilesMenu } from '@ultrst-armada/floks/ui';

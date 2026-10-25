@@ -4,6 +4,7 @@ import { listComponentContracts } from '@ultrst-armada/floks/contracts';
 import { UiAuthoringWorkspace } from '@ultrst-armada/floks/canvas-ui';
 import type { UIAuthoringSession } from '@ultrst-armada/kloks/contracts';
 import type { FunctionalityAsset } from './functionalityEditorModel';
+import { buildServiceAuthoringOperations } from './serviceUiAuthoringModel';
 
 export function ServiceUiAuthoring(props: {
   serviceId: string;
@@ -24,13 +25,7 @@ export function ServiceUiAuthoring(props: {
 
   React.useEffect(() => {
     let mounted = true;
-    const operations = props.functionalities.map((fn) => ({
-      operationId: fn.id,
-      name: fn.name,
-      description: fn.description,
-      inputFields: [{ name: 'input', type: fn.inputSignature }],
-      outputFields: [{ name: 'output', type: fn.outputSignature }],
-    }));
+    const operations = buildServiceAuthoringOperations(props.functionalities);
     void UIAuthoringServiceFacade.execute('createSession', {
       context: 'service',
       operations,

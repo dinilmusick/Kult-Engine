@@ -264,7 +264,8 @@ function AssetEditorOverlay(props: {
             sessionId={`kult:asset:${props.name}`}
             ideService={MonacoIdeServiceFacade}
             onChange={value => props.onChange(props.name, props.signature, value ?? '')}
-            options={{ minimap: { enabled: false }, automaticLayout: true, fontSize: 13 }}
+            minimap={false}
+            fontSize={13}
           />
         </div>
         <footer className="h-11 shrink-0 flex justify-end items-center gap-2 px-3 border-t border-[var(--skipo-border-color)]/30">

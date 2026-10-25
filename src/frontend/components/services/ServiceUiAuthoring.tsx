@@ -10,7 +10,6 @@ export function ServiceUiAuthoring(props: {
   serviceId: string;
   functionalities: FunctionalityAsset[];
   onClose: () => void;
-  onSave: (result: { schema: ServiceUISchema; artifact: UIComponentArtifact }) => void;
 }) {
   const [session, setSession] = React.useState<UIAuthoringSession | null>(null);
   const [status, setStatus] = React.useState('Creating authoring session…');

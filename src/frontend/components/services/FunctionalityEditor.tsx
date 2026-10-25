@@ -1,5 +1,6 @@
 import React from 'react';
-import Editor from '@monaco-editor/react';
+import { MonacoEditor } from '@ultrst-armada/floks/canvas-ui';
+import { MonacoIdeServiceFacade } from '@ultrst-armada/kloks/services';
 import { ArrowLeft, Code2, Database, Library, Plus, Save, Trash2, X, Zap } from 'lucide-react';
 import {
   buildFunctionalityContext,
@@ -74,13 +75,16 @@ export const FunctionalityEditor: React.FC<{
 
       <main className="min-h-0 flex-1 p-3">
         {tab === 'main' && (
-          <Editor
+          <MonacoEditor
             height="100%"
             language="typescript"
             theme="vs-dark"
             value={asset.mainFunction}
+            sessionId={`kult:${asset.id}:main`}
+            ideService={MonacoIdeServiceFacade}
             onChange={value => update({ mainFunction: value ?? '' })}
-            options={{ minimap: { enabled: false }, automaticLayout: true, fontSize: 13 }}
+            minimap={false}
+            fontSize={13}
           />
         )}
 
@@ -125,11 +129,13 @@ export const FunctionalityEditor: React.FC<{
         )}
 
         {tab === 'state' && (
-          <Editor
+          <MonacoEditor
             height="100%"
             language="typescript"
             theme="vs-dark"
             value={asset.stateData}
+            sessionId={`kult:${asset.id}:state`}
+            ideService={MonacoIdeServiceFacade}
             onChange={value => update({ stateData: value ?? '' })}
             options={{ minimap: { enabled: false }, automaticLayout: true, fontSize: 13 }}
           />
@@ -249,11 +255,13 @@ function AssetEditorOverlay(props: {
           <label className="text-[9px]">Signature<input className={inputClass} value={props.signature} onChange={e => props.onChange(props.name, e.target.value, props.value)} /></label>
         </div>
         <div className="min-h-0 flex-1">
-          <Editor
+          <MonacoEditor
             height="100%"
             language="typescript"
             theme="vs-dark"
             value={props.value}
+            sessionId={`kult:asset:${props.name}`}
+            ideService={MonacoIdeServiceFacade}
             onChange={value => props.onChange(props.name, props.signature, value ?? '')}
             options={{ minimap: { enabled: false }, automaticLayout: true, fontSize: 13 }}
           />

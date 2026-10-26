@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { MonacoEditor } from '@ultrst-armada/floks/canvas-ui';
+import { MonacoIdeServiceFacade } from '@ultrst-armada/kloks/services';
 
 interface MonacoCodeViewerProps {
   value: string;
@@ -23,6 +24,7 @@ export const MonacoCodeViewer: React.FC<MonacoCodeViewerProps> = ({
 }) => (
   <div className="w-full h-full overflow-hidden rounded border border-[var(--skipo-border-color)]/30 bg-[#1e1e1e]">
     <MonacoEditor
+      ideService={MonacoIdeServiceFacade}
       value={value}
       language={language}
       theme="vs-dark"

@@ -18,11 +18,11 @@ importers:
         specifier: ^4.1.14
         version: 4.3.3(vite@6.4.5(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.15))
       '@ultrst-armada/floks':
-        specifier: ^1.5.4
-        version: 1.5.4(@ultrst-armada/kloks@1.10.3(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)))(lucide-react@0.546.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
+        specifier: ^1.6.0
+        version: 1.6.0(@ultrst-armada/kloks@1.11.0(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)))(lucide-react@0.546.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
       '@ultrst-armada/kloks':
-        specifier: ^1.10.3
-        version: 1.10.3(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
+        specifier: ^1.11.0
+        version: 1.11.0(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
       '@ultrst-armada/krnl':
         specifier: ^1.0.7
         version: 1.0.7
@@ -925,10 +925,10 @@ packages:
   '@types/node@22.20.5':
     resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
 
-  '@ultrst-armada/floks@1.5.4':
-    resolution: {integrity: sha512-trbTlDqRuVaV2EtEsiP9PRk9vtevj9gYzd6bLOMF03iMXHNmTaYmCvXukkA0iPs72pQ2wixNP193wWaMSTa5Gw==}
+  '@ultrst-armada/floks@1.6.0':
+    resolution: {integrity: sha512-VTZ1Ob/b4RhnODN0T4WN5c32/ETdas3r088JplOkWFclon0NETKgiB1cNKGp3Jyyi/2CT8FTQTZB91GAJ7QDxQ==}
     peerDependencies:
-      '@ultrst-armada/kloks': ^1.9.0
+      '@ultrst-armada/kloks': ^1.11.0
       lucide-react: '>=0.300.0'
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -940,8 +940,8 @@ packages:
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
 
-  '@ultrst-armada/kloks@1.10.3':
-    resolution: {integrity: sha512-t2bihSETrhhu+n0Kyh16PqwLUBlYe8vtRCRZy2HiKZQ3CnMTNTtuWV8wgMv53m7tOKn5TCY4xPYOwkxlEL91CQ==}
+  '@ultrst-armada/kloks@1.11.0':
+    resolution: {integrity: sha512-2ti0hbRd9W5Pt8Sa2RlBThQMkAfxjjbFUYLZB/PKG9GmKytt7CuhBW62WbeHIIak6EsnFbEsprgfDqw3EzafYA==}
     peerDependencies:
       '@neondatabase/serverless': ^0.10.0 || ^1.0.0
       '@supabase/supabase-js': ^2.45.0
@@ -2295,11 +2295,11 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@ultrst-armada/floks@1.5.4(@ultrst-armada/kloks@1.10.3(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)))(lucide-react@0.546.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))':
+  '@ultrst-armada/floks@1.6.0(@ultrst-armada/kloks@1.11.0(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)))(lucide-react@0.546.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))':
     dependencies:
       '@dinilmusick/gutts': 0.1.3
       '@ultrst-armada/frnlts': 0.2.7(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
-      '@ultrst-armada/kloks': 1.10.3(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
+      '@ultrst-armada/kloks': 1.11.0(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
       '@xyflow/react': 12.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       d3-force: 3.0.0
       lucide-react: 0.546.0(react@19.3.1)
@@ -2325,7 +2325,7 @@ snapshots:
       - immer
       - use-sync-external-store
 
-  '@ultrst-armada/kloks@1.10.3(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))':
+  '@ultrst-armada/kloks@1.11.0(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))':
     dependencies:
       '@aws-sdk/client-s3': 3.1156.0
       '@webcontainer/api': 1.6.4

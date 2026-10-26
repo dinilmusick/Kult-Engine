@@ -42,7 +42,9 @@ jobs:
         run: |
           set -euo pipefail
           npx --yes npm-check-updates@latest --upgrade --filter '@dinilmusick/gutts,@ultrst-armada/krnl,@ultrst-armada/frnlts,@ultrst-armada/kloks,@ultrst-armada/floks'
-          if git diff --quiet -- package.json ':(glob)**/package.json'; then
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet -- package.json ':(glob)**/package.json'; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"

@@ -5,9 +5,10 @@
 
 import React from 'react';
 import { MonacoEditor } from '@ultrst-armada/floks/canvas-ui';
+import type { MonacoEditorProps as SharedMonacoEditorProps } from '@ultrst-armada/floks/canvas-ui';
 import { MonacoIdeServiceFacade } from '@ultrst-armada/kloks/services';
 
-interface MonacoCodeViewerProps {
+interface MonacoCodeViewerProps extends Pick<SharedMonacoEditorProps, 'diagnostics' | 'completionProvider' | 'onValidate' | 'onServiceError'> {
   value: string;
   language?: string;
   readOnly?: boolean;
@@ -21,6 +22,10 @@ export const MonacoCodeViewer: React.FC<MonacoCodeViewerProps> = ({
   readOnly = true,
   height = '100%',
   onChange,
+  diagnostics,
+  completionProvider,
+  onValidate,
+  onServiceError,
 }) => (
   <div className="w-full h-full overflow-hidden rounded border border-[var(--skipo-border-color)]/30 bg-[#1e1e1e]">
     <MonacoEditor
@@ -34,6 +39,10 @@ export const MonacoCodeViewer: React.FC<MonacoCodeViewerProps> = ({
       height={height}
       width="100%"
       onChange={onChange}
+      diagnostics={diagnostics}
+      completionProvider={completionProvider}
+      onValidate={onValidate}
+      onServiceError={onServiceError}
     />
   </div>
 );

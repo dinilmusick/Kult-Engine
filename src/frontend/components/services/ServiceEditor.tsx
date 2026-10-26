@@ -152,7 +152,7 @@ export const ServiceEditor: React.FC<{
     {showFunctionDialog&&<FunctionDialog onClose={()=>setShowFunctionDialog(false)} onCreate={fn=>{setFunctionalities(prev=>[...prev,fn]);setShowFunctionDialog(false)}}/>}
     {showOrchestrationDialog&&<OrchestrationDialog functions={functionalities} onClose={()=>setShowOrchestrationDialog(false)} onCreate={o=>{setOrchestrations(prev=>[...prev,{...o,id:'orch-'+Date.now().toString(36)}]);setShowOrchestrationDialog(false)}}/>}
     {editingFunctionality&&<FunctionalityEditor functionality={editingFunctionality} onClose={()=>setEditingFunctionality(null)} onSave={fn=>{setFunctionalities(prev=>prev.map(item=>item.id===fn.id?fn:item));setEditingFunctionality(null)}}/>}
-    {showUiAuthoring&&<ServiceUiAuthoring serviceId={doc.service.id} functionalities={functionalities} onClose={()=>setShowUiAuthoring(false)} onSave={schema=>{setDoc(prev=>({...prev,metadata:{...prev.metadata,serviceUi:schema}}));setShowUiAuthoring(false)}}/>}
+    {showUiAuthoring&&<ServiceUiAuthoring serviceId={doc.service.id} functionalities={functionalities} onClose={()=>setShowUiAuthoring(false)} onSave={({schema,artifact})=>{setDoc(prev=>({...prev,metadata:{...prev.metadata,serviceUi:schema,serviceUiArtifact:artifact}}));setShowUiAuthoring(false)}}/>}
     {showTestRunner&&<ServiceTestRunner service={doc} functionalities={functionalities} orchestrations={orchestrations} onClose={()=>setShowTestRunner(false)}/>} 
   </div>;
 };

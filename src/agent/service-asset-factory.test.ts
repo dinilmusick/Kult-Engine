@@ -1,4 +1,5 @@
-import {describe, expect, it} from "node:test";
+import {describe, it} from "node:test";
+import assert from "node:assert/strict";
 import {kultServiceAssetContract} from "./service-asset-factory.js";
 
 describe("Kult AI service asset contract", () => {

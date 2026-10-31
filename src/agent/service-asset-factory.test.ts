@@ -1,4 +1,4 @@
-import {describe, expect, it} from "vitest";
+import {describe, expect, it} from "node:test";
 import {kultServiceAssetContract} from "./service-asset-factory.js";
 
 describe("Kult AI service asset contract", () => {

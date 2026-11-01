@@ -47,7 +47,7 @@ export function createApplicationAgent(options: ApplicationAgentOptions): Applic
     const result = await executor.execute(capability, input, context, { execute: run });
     return result.artifact.value;
   };
-  const execute = async (capabilityId: string, input: unknown, runtime: RuntimeContext) => { const capability = registry.get(capabilityId); if (!capability) throw new Error('CAPABILITY_NOT_FOUND:' + capabilityId); return invoke(capability, input, await resolver.resolve(runtime, makeContext(runtime, registry).task)); };
+  const execute = async (capabilityId: string, input: unknown, runtime: RuntimeContext) => { const capability = registry.get(capabilityId); if (!capability) throw new Error('CAPABILITY_NOT_FOUND:' + capabilityId); return invoke(capability, input, makeContext(runtime, registry)); };
   const handle = async (request: string, runtime: RuntimeContext) => {
     const context = makeContext(runtime, registry);
     const parts = request.split(/\s+(?:and then|then)\s+/i).map(x => x.trim()).filter(Boolean);
@@ -59,7 +59,7 @@ export function createApplicationAgent(options: ApplicationAgentOptions): Applic
       if (!capability) throw new Error('NO_CAPABILITIES');
       let input: any = {};
       try { const resolved = await resolveSemanticInput({ input: part, schema: capability.inputSchema ?? { type: 'object' }, context: { application: options.id, locale: runtime.locale } }); if (resolved.status === 'resolved') input = resolved.value; } catch {}
-      const resolvedContext = await resolver.resolve(runtime, context.task);
+      const resolvedContext = makeContext(runtime, registry);
       outputs.push(await invoke(capability, input, resolvedContext));
     }
     return outputs.length === 1 ? outputs[0] : outputs;

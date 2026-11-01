@@ -5,7 +5,7 @@ export function createFodModule(agent: ApplicationAgent) {
   const executeFlow = async (flowId: string, input: unknown, context: any) => {
     const capability = agent.capabilities().find(item => item.id === flowId);
     if (!capability) throw new Error('FOD_FLOW_NOT_FOUND:' + flowId);
-    return agent.handle('execute ' + capability.name, context);
+    return agent.execute(flowId, input, context);
   };
   return { listFlows, executeFlow };
 }

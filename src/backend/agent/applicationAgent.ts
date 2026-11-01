@@ -58,7 +58,7 @@ export function createApplicationAgent(options: ApplicationAgentOptions): Applic
       const capability = registry.list().find(c => c.name + ': ' + c.description === selectedText) ?? registry.list()[0];
       if (!capability) throw new Error('NO_CAPABILITIES');
       let input: any = {};
-      try { const resolved = await resolveSemanticInput({ input: part, schema: capability.inputSchema ?? { type: 'object' }, context: { application: options.id, locale: runtime.locale } }); if (resolved.status === 'resolved') input = resolved.value; } catch {}
+      try { const resolved = await resolveSemanticInput({ input: part, schema: (capability.inputSchema ?? { type: 'object' }) as any, context: { application: options.id, locale: runtime.locale } }); if (resolved.status === 'resolved') input = resolved.value; } catch {}
       const resolvedContext = makeContext(runtime, registry);
       outputs.push(await invoke(capability, input, resolvedContext));
     }

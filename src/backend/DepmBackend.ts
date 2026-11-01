@@ -19,6 +19,7 @@ import {
   getSrklBackblazeAccounts,
   listBackblazeBuckets as listKultBackblazeBuckets,
 } from "./services/kultWorkspaceService";
+import { kultServiceAuthoring } from "./services/kultServiceAuthoring";
 
 const userStore = new Map<string, { id: string; email: string; name: string; role: string }>([
   ["sys_admin", { id: "sys_admin", email: "admin@kult.org", name: "Kult System", role: "admin" }],
@@ -50,6 +51,7 @@ function toLocalServiceRecord(document: any) {
 
 export const DepmBackend = {
   services: {
+    service: kultServiceAuthoring,
     skipoAgent: skipoAgentService,
     auth: {
       async loginUser(email = "", password = "", _isAdmin = false, env: any = {}) { return loginKultUser(email, password, env); },

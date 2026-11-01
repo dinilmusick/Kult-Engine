@@ -4,7 +4,7 @@ import { CapabilityExecutionRuntime, CapabilityRegistry, ContextResolver, type A
 import { guttsApiDefinitions, executeGuttsApi, resolveSemanticInput, rankSemanticInputCandidates } from '@dinilmusick/gutts';
 
 export interface ApplicationAgentOptions { id: string; name: string; version?: string; backend: Record<string, unknown>; }
-export interface ApplicationAgent { handle(request: string, context: RuntimeContext): Promise<unknown>; capabilities(): CapabilityDescriptor[]; manifest(): unknown; aiko(): AikoRuntime; }
+export interface ApplicationAgent { handle(request: string, context: RuntimeContext): Promise<unknown>; execute(capabilityId: string, input: unknown, context: RuntimeContext): Promise<unknown>; capabilities(): CapabilityDescriptor[]; manifest(): unknown; aiko(): AikoRuntime; }
 const blocked = /password|secret|token|authorization|credential|private.?key/i;
 function schemaFor(_fn: Function) { return { type: 'object', properties: { input: { type: 'object' }, args: { type: 'array' } } }; }
 
@@ -47,6 +47,7 @@ export function createApplicationAgent(options: ApplicationAgentOptions): Applic
     const result = await executor.execute(capability, input, context, { execute: run });
     return result.artifact.value;
   };
+  const execute = async (capabilityId: string, input: unknown, runtime: RuntimeContext) => { const capability = registry.get(capabilityId); if (!capability) throw new Error('CAPABILITY_NOT_FOUND:' + capabilityId); return invoke(capability, input, await resolver.resolve(runtime, makeContext(runtime, registry).task)); };
   const handle = async (request: string, runtime: RuntimeContext) => {
     const context = makeContext(runtime, registry);
     const parts = request.split(/\s+(?:and then|then)\s+/i).map(x => x.trim()).filter(Boolean);
@@ -67,5 +68,5 @@ export function createApplicationAgent(options: ApplicationAgentOptions): Applic
   const applicationTool = { id: options.id + '.application-agent', name: options.name + ' Application Agent', description: 'Conversational engineering agent for ' + options.name + '.', inputSchema: { type: 'object', properties: { request: { type: 'string' } }, required: ['request'] }, sourceKind: 'custom' as const, sourceId: options.id, execute: async (input: unknown) => handle(typeof input === 'string' ? input : String((input as any)?.request ?? ''), { applicationId: options.id, sessionId: 'aiko', userId: 'system' }) };
   const definition: AikoAgentDefinition = { schemaVersion: '1.0.0', id: options.id + '-application-agent', name: applicationTool.name, description: applicationTool.description, agentType: 'AIKO', tool: applicationTool, intelligenceSpec: { mode: 'semantic-runtime' }, sourceKind: 'custom', sourceId: options.id, custom: true };
   const runtime = new AikoRuntime({ customAgents: [definition], capabilities, resolver: { resolve: async specId => ({ spec: { mode: 'semantic-runtime', specId: specId ?? 'semantic-runtime' }, specId: specId ?? 'semantic-runtime' }) }, keys: { listKeys: async () => AIKeyServiceFacade.getKeys() as any, getActiveKey: async (providerId: string) => (AIKeyServiceFacade as any).getActiveKey?.(providerId) ?? null, rotateKey: async (providerId: string) => (AIKeyServiceFacade as any).rotateKey?.(providerId) ?? null, addKey: async (input: any) => AIKeyServiceFacade.addKey(input) as any, syncFromAikoEngine: async () => ({ synced: 0 }) } });
-  return { handle, aiko: () => runtime, capabilities: () => registry.list(), manifest: () => ({ id: options.id, name: options.name, version: options.version ?? '0.0.0', capabilities: registry.list(), agents: [definition] }) };
+  return { handle, execute, aiko: () => runtime, capabilities: () => registry.list(), manifest: () => ({ id: options.id, name: options.name, version: options.version ?? '0.0.0', capabilities: registry.list(), agents: [definition] }) };
 }

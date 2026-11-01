@@ -5,6 +5,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { DepmBackend } from '../DepmBackend';
+import { handleAgentRoutes } from '../agent/runtime';
 import { adaptNodeRequest } from './nodeBridge';
 import { handleVaultRoutes } from './vaultRoutes';
 import { createLocalServiceFromKloksAsset, getKloksServiceAsset } from '../../libraries/services/assetDiscovery';
@@ -49,6 +50,9 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   const { method } = request;
 
   if (method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
+
+  const agentRes = await handleAgentRoutes(request, url, jsonRes, parseBody);
+  if (agentRes) return agentRes;
 
   const ingress = DepmBackend.services.routes.matchGatewayIngress(pathname);
   if (ingress) return Response.redirect(ingress.destinationUrl, 302);

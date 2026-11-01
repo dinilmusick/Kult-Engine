@@ -1,0 +1,8 @@
+{
+  "id": "kult",
+  "name": "Kult",
+  "version": "0.0.0",
+  "visibleByDefault": true,
+  "backendEntry": "src/hubrys/componentApp.ts",
+  "uiEntry": "src/frontend/App.tsx"
+}

@@ -28,7 +28,7 @@ export const LoginGate: React.FC<LoginGateProps> = ({ appName = 'KULT ENGINE', o
       }}
       onRegister={async ({ name, email, password }) => {
         const result = await authClient.signUpEmail(email, password, name);
-        return { success: result.success, error: result.error, user: result.user, token: (result as typeof result & { token?: string }).token };
+        return { success: result.success, error: result.error, user: result.user, token: result.token };
       }}
       onGoogleSignIn={async () => {
         const callbackURL = window.location.origin + '/?auth=google';

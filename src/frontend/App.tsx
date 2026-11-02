@@ -24,6 +24,25 @@ export function App() {
   const [localServices, setLocalServices] = useState<LocalServiceRecord[]>([]);
 
   useEffect(() => {
+    if (token || typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("auth") !== "google") return;
+    const authBase = import.meta.env.VITE_SRKL_AUTH_BASE_URL || "https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app";
+    fetch(authBase.replace(/\\/+$/, "") + "/api/auth/get-session", { credentials: "include" })
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((session) => {
+        const canonicalToken = session?.session?.token;
+        const canonicalUser = session?.user;
+        if (!canonicalToken || !canonicalUser?.id) return;
+        sessionStorage.setItem("kultCanonicalSessionToken", canonicalToken);
+        sessionStorage.setItem("kultCanonicalUserId", canonicalUser.id);
+        setToken(canonicalToken);
+        setUserId(canonicalUser.id);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      })
+      .catch((error) => console.error("Canonical Google session restoration failed", error));
+  }, [token]);
+
+  useEffect(() => {
     if (!token || !userId) return;
     apiClient
       .getWorkspaces(userId)
@@ -135,6 +154,16 @@ export function App() {
             onDeleteWorkspace={handleDeleteWorkspace}
             userId={userId}
             onLogout={() => {
+              const currentToken = sessionStorage.getItem("kultCanonicalSessionToken");
+              if (currentToken) {
+                const authBase = import.meta.env.VITE_SRKL_AUTH_BASE_URL || "https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app";
+                void fetch(authBase.replace(/\\/+$/, "") + "/api/auth/sign-out", {
+                  method: "POST",
+                  credentials: "include",
+                  headers: { "Content-Type": "application/json", Authorization: "Bearer " + currentToken },
+                  body: "{}",
+                });
+              }
               setToken(null);
               setUserId(null);
               setActiveWorkspaceId(null);

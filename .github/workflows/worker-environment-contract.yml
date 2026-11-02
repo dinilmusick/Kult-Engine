@@ -1,0 +1,38 @@
+name: Worker Environment Contract
+
+on:
+  pull_request:
+    paths:
+      - "wrangler.toml"
+      - ".github/workflows/worker-environment-contract.yml"
+  push:
+    branches: [main]
+    paths:
+      - "wrangler.toml"
+      - ".github/workflows/worker-environment-contract.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate minimal Worker environment contract
+        run: |
+          python - <<'PY'
+          import pathlib
+          import tomllib
+
+          config = tomllib.loads(pathlib.Path("wrangler.toml").read_text())
+          variables = config.get("vars", {})
+          allowed = {"DEPM_GATEWAY_DOMAIN"} if pathlib.Path("package.json").exists() and '"name": "depm-engine"' in pathlib.Path("package.json").read_text() else set()
+          assert set(variables) <= allowed, f"Unexpected Worker vars: {sorted(set(variables) - allowed)}"
+          raw = pathlib.Path("wrangler.toml").read_text()
+          assert "SYSTEM_DATABASE_URL_1" in raw
+          assert "SYSTEM_DATABASE_URL_2" in raw
+          assert "SYSTEM_DATABASE_URL_3" in raw
+          assert "postgresql://" not in raw, "Database connection strings must not be committed"
+          print("Worker environment contract passed.")
+          PY

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "browserInspection": {
+    "enabled": true,
+    "routes": ["/"],
+    "viewports": [
+      { "width": 1440, "height": 900 },
+      { "width": 390, "height": 844 }
+    ],
+    "checks": [
+      { "selector": "#root", "visible": true }
+    ],
+    "captureDom": true,
+    "timeoutMs": 30000,
+    "waitUntil": "domcontentloaded",
+    "maxDomCharacters": 120000
+  }
+}

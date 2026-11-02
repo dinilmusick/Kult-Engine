@@ -1,0 +1,18 @@
+name: Real App Browser Inspection
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    uses: dinilmusick/Skipo/.github/workflows/preview-inspection.yml@main
+    with:
+      repository: ${{ github.repository }}
+      ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      manifest_path: skipo.browser-inspection.json

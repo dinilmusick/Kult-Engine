@@ -72,7 +72,7 @@ export async function handleVaultRoutes(
   if (credMatch) {
     const credId = credMatch[1];
     const wsId = url.searchParams.get('workspaceId');
-    const { workspace, connection } = wsId ? await DepmBackend.services.workspace.findUserWorkspace(wsId, env) : { workspace: null, connection: null };
+    const { workspace, connection } = wsId ? await DepmBackend.services.workspace.findUserWorkspace(wsId, userId, env) : { workspace: null, connection: null };
     if (!workspace) return jsonRes({ success: false, error: 'Valid workspaceId is required' }, 400);
 
     if (method === 'GET') {

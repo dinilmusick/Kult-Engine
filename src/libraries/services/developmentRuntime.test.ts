@@ -4,6 +4,7 @@ import { DevelopmentRuntime, resolveDevelopmentCommand } from '@ultrst-armada/kl
 
 test('Kult consumes the canonical Kloks development command plan', () => {
   assert.deepEqual(resolveDevelopmentCommand('build'), ['pnpm', ['build']]);
+  assert.deepEqual(resolveDevelopmentCommand('validate'), ['pnpm', ['validate']]);
 });
 
 test('Kult can execute through the GitHub Actions provider contract', async () => {
@@ -22,7 +23,6 @@ test('Kult can execute through the GitHub Actions provider contract', async () =
   assert.equal(result.ok, true);
   assert.equal(called, true);
 });
-
 
 test('Kult imports the canonical Kloks WebContainer service surface', async () => {
   const { WebContainerServiceDefinition } = await import('@ultrst-armada/kloks/development');

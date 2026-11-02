@@ -12,8 +12,5 @@ not_found_handling = "single-page-application"
 [build]
 command = "npm run build"
 
-[vars]
-API_ENV = "cloudflare"
-BUILD_TARGET = "api"
-DEPM_GATEWAY_DOMAIN = "https://depm-engine.todadjp.workers.dev"
-SYSTEM_DATABASE_URL_1 = "postgresql://neondb_owner:npg_JoS3bApHWOR9@ep-muddy-wildflower-aeyd7k6j-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+# Configure SYSTEM_DATABASE_URL_1 as a mandatory Cloudflare Worker Secret.
+# SYSTEM_DATABASE_URL_2 and SYSTEM_DATABASE_URL_3 are optional secret fallbacks.

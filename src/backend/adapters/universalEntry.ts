@@ -7,10 +7,18 @@
 import { fetchHandler, Env } from './httpsAdapter';
 import { adaptNodeRequest } from './nodeBridge';
 
+function getSystemDatabaseEnv(): Env {
+  return {
+    SYSTEM_DATABASE_URL_1: process.env.SYSTEM_DATABASE_URL_1,
+    SYSTEM_DATABASE_URL_2: process.env.SYSTEM_DATABASE_URL_2,
+    SYSTEM_DATABASE_URL_3: process.env.SYSTEM_DATABASE_URL_3,
+  };
+}
+
 // Polyglot Universal Handler (Node / Vercel)
 const universalHandler = async function (req: any, res?: any, env?: any): Promise<any> {
   if (req && res && typeof res.writeHead === 'function') {
-    return adaptNodeRequest(req, res, (webReq) => fetchHandler(webReq, (process.env as unknown as Env) || {}));
+    return adaptNodeRequest(req, res, (webReq) => fetchHandler(webReq, getSystemDatabaseEnv()));
   }
   return fetchHandler(req, env || res);
 };
@@ -27,13 +35,13 @@ if (
       const fs = await import('node:fs');
       const path = await import('node:path');
 
-      const port = Number(process.env.PORT) || 3000;
+      const port = 3000;
       const distPath = path.resolve(process.cwd(), 'dist');
 
       const server = http.createServer(async (req, res) => {
         const url = req.url || '/';
         if (url.startsWith('/api/') || url === '/api' || url.startsWith('/health')) {
-          return adaptNodeRequest(req, res, (webReq) => fetchHandler(webReq, (process.env as unknown as Env) || {}));
+          return adaptNodeRequest(req, res, (webReq) => fetchHandler(webReq, getSystemDatabaseEnv()));
         }
 
         const filePath = path.join(distPath, url.split('?')[0]);

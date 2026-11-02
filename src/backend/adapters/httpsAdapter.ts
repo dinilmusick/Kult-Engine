@@ -17,6 +17,7 @@ export interface Env {
   SYSTEM_DATABASE_URL_1?: string;
   SYSTEM_DATABASE_URL_2?: string;
   SYSTEM_DATABASE_URL_3?: string;
+  SRKL_AUTH_BASE_URL?: string;
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
   [key: string]: unknown;
 }
@@ -24,7 +25,7 @@ export interface Env {
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id, X-Workspace-Id, X-Vault-Key',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Workspace-Id, X-Vault-Key',
 };
 
 function jsonRes(data: unknown, status = 200): Response {
@@ -35,13 +36,21 @@ async function parseBody(req: Request): Promise<any> {
   try { return await req.json(); } catch { return {}; }
 }
 
-function getUserId(req: Request, url: URL): string {
-  const auth = req.headers.get('authorization') || '';
-  if (auth.startsWith('Bearer sess::')) {
-    const p = auth.replace('Bearer sess::', '').split('::');
-    if (p[0]) return p[0];
+async function getUserId(req: Request, _url: URL, env: Env): Promise<string> {
+  const authorization = req.headers.get('authorization') || '';
+  const token = authorization.match(/^Bearer\\s+(.+)$/i)?.[1];
+  if (!token || token.startsWith('sess::')) return '';
+  const baseUrl = String(env.SRKL_AUTH_BASE_URL || 'https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app').replace(/\\/+$/, '');
+  try {
+    const response = await fetch(`${baseUrl}/api/auth/get-session`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    if (!response.ok) return '';
+    const session = await response.json() as { user?: { id?: string } };
+    return typeof session.user?.id === 'string' ? session.user.id : '';
+  } catch {
+    return '';
   }
-  return req.headers.get('x-user-id') || url.searchParams.get('userId') || '';
 }
 
 export async function fetchHandler(request: Request, env: Env = {}): Promise<Response> {
@@ -61,20 +70,11 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     return jsonRes({ status: 'ok', service: 'depm-unified-engine', timestamp: new Date().toISOString() });
   }
 
-  // 1. Auth routes
-  if (pathname === '/api/auth/login' && method === 'POST') {
-    const b = await parseBody(request);
-    const res = await DepmBackend.services.auth.loginUser(b.email || b.identifier, b.password, false, env);
-    return jsonRes(res, (res as any).status || 200);
+  // Authentication is owned by SRKL. Legacy local login endpoints are intentionally unavailable.
+  if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/admin/login') || pathname === '/api/auth/register') {
+    return jsonRes({ success: false, error: 'Use the canonical SRKL authentication service.' }, 410);
   }
-  if (pathname === '/api/auth/admin/login' && method === 'POST') {
-    const b = await parseBody(request);
-    const res = await DepmBackend.services.auth.loginUser(b.email || b.identifier, b.password, true, env);
-    return jsonRes(res, (res as any).status || 200);
-  }
-  if (pathname === '/api/auth/users' && method === 'GET') {
-    return jsonRes(await DepmBackend.services.auth.getUsers(env));
-  }
+
 
   // 2. Workspace & Cloud Storage routes
   if (pathname === '/api/workspace/storage-details' && method === 'GET') {
@@ -82,7 +82,7 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     return jsonRes(await DepmBackend.services.workspace.getWorkspaceStorageDetails(wsId, env));
   }
   if (pathname === '/api/db/workspace') {
-    const uId = getUserId(request, url);
+    const uId = await getUserId(request, url, env);
     const wsId = url.searchParams.get('workspaceId') || url.searchParams.get('id') || '';
     if (method === 'GET') return jsonRes(await DepmBackend.services.workspace.loadWorkspaceData(uId, wsId, env));
     if (method === 'POST') {
@@ -92,14 +92,14 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   }
   if (pathname === '/api/db/workspace/rename-app' && method === 'POST') {
     const b = await parseBody(request);
-    return jsonRes(await DepmBackend.services.workspace.renameAppInWorkspaceData(getUserId(request, url), b.workspaceId, b.appId, b.newName, env));
+    return jsonRes(await DepmBackend.services.workspace.renameAppInWorkspaceData(await getUserId(request, url, env), b.workspaceId, b.appId, b.newName, env));
   }
   if (pathname === '/api/workspaces' || pathname === '/api/auth/workspaces') {
     const uId = getUserId(request, url);
     if (method === 'GET') return jsonRes(await DepmBackend.services.workspace.getWorkspaces(uId, env));
     if (method === 'POST') {
       const b = await parseBody(request);
-      return jsonRes(await DepmBackend.services.workspace.createWorkspace(uId || b.userId, b.workspace || b, env));
+      return jsonRes(await DepmBackend.services.workspace.createWorkspace(uId, b.workspace || b, env));
     }
     if (method === 'PUT') {
       const b = await parseBody(request);

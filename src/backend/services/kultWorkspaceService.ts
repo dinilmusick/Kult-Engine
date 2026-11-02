@@ -84,6 +84,13 @@ function normalize(input: any, existing?: KultWorkspace): KultWorkspace {
     b2Region: input.b2Region ?? existing?.b2Region, createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
 }
 
+export async function findUserWorkspace(identifier: string, workspaceId: string, env: any = {}) {
+  const row = await findUser(identifier, env);
+  if (!row) return { workspace: null, connection: null };
+  const workspace = workspaceList(row).find((item) => item.id === workspaceId) || null;
+  return { workspace, connection: null };
+}
+
 export async function getWorkspaces(identifier: string, env: any = {}) {
   const row = await findUser(identifier, env);
   if (!row) return { success: false, status: 404, error: 'User not found.', workspaces: [] };

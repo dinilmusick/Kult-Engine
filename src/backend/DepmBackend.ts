@@ -11,7 +11,6 @@ import { STARTER_SERVICES } from "../libraries/services/starterServices";
 import type { ServiceDocument } from "../libraries/types/serviceIR";
 import { skipoAgentService } from '../libraries/services/skipoAgent';
 import {
-  loginUser as loginKultUser,
   getWorkspaces as getKultWorkspaces,
   createWorkspace as createKultWorkspace,
   updateWorkspace as updateKultWorkspace,
@@ -20,22 +19,6 @@ import {
   listBackblazeBuckets as listKultBackblazeBuckets,
 } from "./services/kultWorkspaceService";
 import { kultServiceAuthoring } from "./services/kultServiceAuthoring";
-
-const userStore = new Map<string, { id: string; email: string; name: string; role: string }>([
-  ["sys_admin", { id: "sys_admin", email: "admin@kult.org", name: "Kult System", role: "admin" }],
-]);
-
-const workspaceStore = new Map<string, any[]>([
-  ["sys_admin", [
-    { id: "ws-kult-main", name: "Kult Main Workspace", storageProvider: "in-memory", workspacePath: "/workspaces/kult-main" },
-  ]],
-]);
-
-const workspaceDataStore = new Map<string, any>();
-
-function doLoginUser(email = "", _password = "", _env: any = {}) {
-  return { success: true, token: "kult_token_" + Date.now(), user: { id: "sys_admin", email, name: "Admin", role: "admin" } };
-}
 
 async function doQueryDb(_query: string, _params: any[] = [], _env: any = {}) {
   return { rows: [] };
@@ -54,7 +37,6 @@ export const DepmBackend = {
     service: kultServiceAuthoring,
     skipoAgent: skipoAgentService,
     auth: {
-      async loginUser(email = "", password = "", _isAdmin = false, env: any = {}) { return loginKultUser(email, password, env); },
       async getUsers(env: any = {}) {
         try {
           const result = await doQueryDb("SELECT id, email, username, name, role, email_verified, trust_level, status FROM \"ultrst-users\" ORDER BY email", [], env);

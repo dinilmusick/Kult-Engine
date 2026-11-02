@@ -92,8 +92,10 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     }
   }
   if (pathname === '/api/db/workspace/rename-app' && method === 'POST') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     const b = await parseBody(request);
-    return jsonRes(await DepmBackend.services.workspace.renameAppInWorkspaceData(await getUserId(request, url, env), b.workspaceId, b.appId, b.newName, env));
+    return jsonRes(await DepmBackend.services.workspace.renameAppInWorkspaceData(userId, b.workspaceId, b.appId, b.newName, env));
   }
   if (pathname === '/api/workspaces' || pathname === '/api/auth/workspaces') {
     const uId = await getUserId(request, url, env);
@@ -125,6 +127,7 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   // 3. Storage Connections & Testing
   if (pathname === '/api/storage/connections' || pathname === '/api/auth/storage/connections') {
     const uId = await getUserId(request, url, env);
+    if (!uId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     if (method === 'GET') return jsonRes(await DepmBackend.services.storage.getStorageConnections(uId, env));
     if (method === 'POST') {
       const b = await parseBody(request);
@@ -133,7 +136,9 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   }
   const connDelMatch = pathname.match(/^\/api\/storage\/connections\/([^/]+)$/);
   if (connDelMatch && method === 'DELETE') {
-    return jsonRes(await DepmBackend.services.storage.deleteStorageConnection(getUserId(request, url), connDelMatch[1], env));
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
+    return jsonRes(await DepmBackend.services.storage.deleteStorageConnection(userId, connDelMatch[1], env));
   }
   if ((pathname === '/api/storage/test' || pathname === '/api/auth/storage/test') && method === 'POST') {
     return jsonRes(await DepmBackend.services.storage.testStorageConnection((await parseBody(request)).connection || await parseBody(request)));
@@ -149,11 +154,14 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   }
 
   // 5. Workspace Vault & SRKL Ecosystem routes
-  const vaultRes = await handleVaultRoutes(request, url, getUserId(request, url), env, jsonRes, parseBody);
+  const vaultUserId = await getUserId(request, url, env);
+  const vaultRes = await handleVaultRoutes(request, url, vaultUserId, env, jsonRes, parseBody);
   if (vaultRes) return vaultRes;
 
   if (pathname === '/api/srkl/accounts' && method === 'GET') {
-    return jsonRes(await DepmBackend.services.srkl.getSrklAccounts(getUserId(request, url), url.searchParams.get('service') || '', env));
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
+    return jsonRes(await DepmBackend.services.srkl.getSrklAccounts(userId, url.searchParams.get('service') || '', env));
   }
   if (pathname === '/api/srkl/status' && method === 'GET') {
     return jsonRes(await DepmBackend.services.srkl.getSrklStatus(env));

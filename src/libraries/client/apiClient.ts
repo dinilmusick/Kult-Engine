@@ -25,7 +25,7 @@ export const apiClient = {
     return res.json();
   },
 
-  async copyKloksServiceLocally(serviceId: string, userId: string) {
+  async copyKloksServiceLocally(serviceId: string, _userId?: string) {
     const res = await wrappedFetch('/api/kult/kloks/services/' + encodeURIComponent(serviceId) + '/copy', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
     });
@@ -46,10 +46,10 @@ export const apiClient = {
     return res.json();
   },
 
-  async createWorkspace(userId: string, data: Record<string, unknown>) {
+  async createWorkspace(_userId: string, data: Record<string, unknown>) {
     const res = await wrappedFetch('/api/auth/workspaces', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
     return res.json();
@@ -74,7 +74,7 @@ export const apiClient = {
     return res.json();
   },
 
-  async saveStorageConnection(userId: string, data: Record<string, unknown>) {
+  async saveStorageConnection(_userId: string, data: Record<string, unknown>) {
     const res = await wrappedFetch('/api/auth/storage/connections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-id': userId },

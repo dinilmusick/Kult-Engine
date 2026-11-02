@@ -26,11 +26,11 @@ export const LoginGate: React.FC<LoginGateProps> = ({ appName = 'KULT ENGINE', o
       footerText="Ultrst Armada • Governed by Skipo"
       onLogin={async (email, password) => {
         const result = await authClient.signInEmail(email, password);
-        return { success: result.success, error: result.error, user: result.user, token: result.token };
+        return { success: result.success, error: result.error, user: result.user, token: (result as typeof result & { token?: string }).token };
       }}
       onRegister={async ({ name, email, password }) => {
         const result = await authClient.signUpEmail(email, password, name);
-        return { success: result.success, error: result.error, user: result.user, token: result.token };
+        return { success: result.success, error: result.error, user: result.user, token: (result as typeof result & { token?: string }).token };
       }}
       onGoogleSignIn={async () => {
         const callbackURL = window.location.origin + '/?auth=google';

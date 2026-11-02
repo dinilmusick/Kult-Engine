@@ -7,6 +7,7 @@ const root = process.cwd();
 const adapter = fs.readFileSync(path.join(root, 'src/backend/adapters/httpsAdapter.ts'), 'utf8');
 const workspaceService = fs.readFileSync(path.join(root, 'src/backend/services/kultWorkspaceService.ts'), 'utf8');
 const apiClient = fs.readFileSync(path.join(root, 'src/libraries/client/apiClient.ts'), 'utf8');
+const backendFacade = fs.readFileSync(path.join(root, 'src/backend/DepmBackend.ts'), 'utf8');
 
 test('Kult resolves identity only by validating a canonical SRKL bearer session', () => {
   assert.match(adapter, /api\/auth\/get-session/);

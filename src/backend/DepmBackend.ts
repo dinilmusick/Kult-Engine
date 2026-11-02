@@ -20,13 +20,7 @@ import {
 } from "./services/kultWorkspaceService";
 import { kultServiceAuthoring } from "./services/kultServiceAuthoring";
 
-async function doQueryDb(_query: string, _params: any[] = [], _env: any = {}) {
-  return { rows: [] };
-}
-
-async function doListBuckets(_input: any = {}) {
-  return { success: true, buckets: [] };
-}
+const workspaceDataStore = new Map<string, any>();
 
 function toLocalServiceRecord(document: any) {
   return { id: document.service?.id || `local-${Date.now().toString(36)}`, folder: String(document.service?.name || "new-service").toLowerCase().replace(/[^a-z0-9]+/g, "-"), document, updatedAt: new Date().toISOString() };
@@ -36,15 +30,6 @@ export const DepmBackend = {
   services: {
     service: kultServiceAuthoring,
     skipoAgent: skipoAgentService,
-    auth: {
-      async getUsers(env: any = {}) {
-        try {
-          const result = await doQueryDb("SELECT id, email, username, name, role, email_verified, trust_level, status FROM \"ultrst-users\" ORDER BY email", [], env);
-          return { success: true, users: result.rows || [] };
-        } catch (error: any) { return { success: false, users: [], error: error?.message || "System database unavailable." }; }
-      },
-    },
-
     workspace: {
       async getWorkspaces(userId = "sys_admin", env: any = {}) { return getKultWorkspaces(userId, env); },
       async createWorkspace(userId = "sys_admin", data: any = {}, env: any = {}) { return createKultWorkspace(userId, data, env); },

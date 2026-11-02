@@ -14,7 +14,7 @@ test('Kult resolves identity only by validating a canonical SRKL bearer session'
   assert.match(adapter, /session\.user\?\.id/);
   assert.doesNotMatch(adapter, /req\.headers\.get\(['"]x-user-id['"]\)/i);
   assert.doesNotMatch(adapter, /searchParams\.get\(['"]userId['"]\)/i);
-  assert.doesNotMatch(adapter, /sess::/);
+  assert.match(adapter, /token\.startsWith\(['\"]sess::['\"]\)/);\n  assert.doesNotMatch(adapter, /Bearer sess::/);
 });
 
 test('Kult no longer implements local password verification or session issuance', () => {

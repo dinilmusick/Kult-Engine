@@ -3,7 +3,7 @@ import { Play, Loader2, Terminal, CheckCircle2, XCircle } from 'lucide-react';
 import type { ServiceDocument } from '../../../libraries/types/serviceIR';
 import type { FunctionalityAsset } from './functionalityEditorModel';
 import { buildExecutionProject } from './kultExecutionModel';
-import { WebContainerServiceFacade, CodeValidationServiceFacade } from '@ultrst-armada/kloks/development';
+import { WebContainerServiceFacade } from '@ultrst-armada/kloks/development';
 import { ServiceDiagnosticsPanel } from './ServiceDiagnosticsPanel';
 import { parseExecutionResult } from './kultExecutionModel';
 

@@ -8,7 +8,6 @@ import { DepmBackend } from '../DepmBackend';
 export function getVaultKey(req: Request, url: URL, userId: string): string {
   const headerKey = req.headers.get('x-vault-key');
   if (headerKey) return headerKey.trim();
-  const auth = req.headers.get('authorization') || '';
   return `depm_vault_${userId || 'default_session'}`;
 }
 

@@ -38,9 +38,9 @@ async function parseBody(req: Request): Promise<any> {
 
 async function getUserId(req: Request, _url: URL, env: Env): Promise<string> {
   const authorization = req.headers.get('authorization') || '';
-  const token = authorization.match(/^Bearer\\s+(.+)$/i)?.[1];
+  const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1];
   if (!token || token.startsWith('sess::')) return '';
-  const baseUrl = String(env.SRKL_AUTH_BASE_URL || 'https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app').replace(/\\/+$/, '');
+  const baseUrl = String(env.SRKL_AUTH_BASE_URL || 'https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app').replace(/\/+$/, '');
   try {
     const response = await fetch(`${baseUrl}/api/auth/get-session`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -83,6 +83,7 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   }
   if (pathname === '/api/db/workspace') {
     const uId = await getUserId(request, url, env);
+    if (!uId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     const wsId = url.searchParams.get('workspaceId') || url.searchParams.get('id') || '';
     if (method === 'GET') return jsonRes(await DepmBackend.services.workspace.loadWorkspaceData(uId, wsId, env));
     if (method === 'POST') {
@@ -95,7 +96,8 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     return jsonRes(await DepmBackend.services.workspace.renameAppInWorkspaceData(await getUserId(request, url, env), b.workspaceId, b.appId, b.newName, env));
   }
   if (pathname === '/api/workspaces' || pathname === '/api/auth/workspaces') {
-    const uId = getUserId(request, url);
+    const uId = await getUserId(request, url, env);
+    if (!uId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     if (method === 'GET') return jsonRes(await DepmBackend.services.workspace.getWorkspaces(uId, env));
     if (method === 'POST') {
       const b = await parseBody(request);
@@ -103,7 +105,7 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     }
     if (method === 'PUT') {
       const b = await parseBody(request);
-      return jsonRes(await DepmBackend.services.workspace.updateWorkspace(uId || b.userId, b, env));
+      return jsonRes(await DepmBackend.services.workspace.updateWorkspace(uId, b, env));
     }
     if (method === 'DELETE') {
       return jsonRes(await DepmBackend.services.workspace.deleteWorkspace(uId, url.searchParams.get('workspaceId') || url.searchParams.get('id') || '', env));
@@ -112,7 +114,9 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
 
   // 2.5 SRKL Backblaze federation used by workspace creation
   if (pathname === '/api/srkl/backblaze/accounts' && method === 'GET') {
-    return jsonRes(await DepmBackend.services.srkl.getSrklAccounts(getUserId(request, url), 'backblaze', env));
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
+    return jsonRes(await DepmBackend.services.srkl.getSrklAccounts(userId, 'backblaze', env));
   }
   if (pathname === '/api/srkl/backblaze/buckets' && method === 'POST') {
     return jsonRes(await DepmBackend.services.srkl.listBackblazeBuckets(await parseBody(request)));
@@ -120,11 +124,11 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
 
   // 3. Storage Connections & Testing
   if (pathname === '/api/storage/connections' || pathname === '/api/auth/storage/connections') {
-    const uId = getUserId(request, url);
+    const uId = await getUserId(request, url, env);
     if (method === 'GET') return jsonRes(await DepmBackend.services.storage.getStorageConnections(uId, env));
     if (method === 'POST') {
       const b = await parseBody(request);
-      return jsonRes(await DepmBackend.services.storage.saveStorageConnection(uId || b.userId, b.connection || b, env), 201);
+      return jsonRes(await DepmBackend.services.storage.saveStorageConnection(uId, b.connection || b, env), 201);
     }
   }
   const connDelMatch = pathname.match(/^\/api\/storage\/connections\/([^/]+)$/);

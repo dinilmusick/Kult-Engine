@@ -19,3 +19,26 @@ export async function runKultDevelopment(
 ): Promise<DevelopmentResult> {
   return createKultDevelopmentRuntime(githubToken).run(request);
 }
+
+export interface KultBrowserInspectionRequest {
+  url: string;
+  timeoutMs?: number;
+  viewports?: Array<{ width: number; height: number }>;
+  screenshotDirectory?: string;
+  reportPath?: string;
+  captureDom?: boolean;
+}
+
+export interface KultBrowserInspectionAdapter {
+  inspect(request: KultBrowserInspectionRequest): Promise<{
+    ok: boolean;
+    errors: Array<{ kind: string; message: string }>;
+    screenshots: string[];
+  }>;
+}
+
+export function createKultBrowserInspection(adapter: KultBrowserInspectionAdapter) {
+  return {
+    inspectServiceUI: (request: KultBrowserInspectionRequest) => adapter.inspect(request),
+  };
+}

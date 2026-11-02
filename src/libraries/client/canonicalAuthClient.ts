@@ -8,15 +8,16 @@ export interface CanonicalAuthResult {
 
 export class KultCanonicalAuthClient {
   private readonly baseUrl: string;
+  private readonly fetcher: typeof fetch;
 
-  constructor(baseUrl: string) {
+  constructor(baseUrl: string, fetcher: typeof fetch = fetch) {
     if (!baseUrl?.trim()) throw new Error('Canonical SRKL auth URL is required.');
     this.baseUrl = baseUrl.trim().replace(/\/+$/, '');
   }
 
   private async post(path: string, body: Record<string, unknown>): Promise<CanonicalAuthResult> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/auth${path}`, {
+      const response = await this.fetcher(`${this.baseUrl}/api/auth${path}`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

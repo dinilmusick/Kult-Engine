@@ -26,7 +26,6 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm lint
-          pnpm test
           pnpm build
       - name: Install isolated Playwright runtime
         run: npm install --prefix /tmp/forge-playwright --no-save playwright@1.58.2

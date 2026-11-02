@@ -12,7 +12,8 @@ export class KultCanonicalAuthClient {
 
   constructor(baseUrl: string, fetcher: typeof fetch = fetch) {
     if (!baseUrl?.trim()) throw new Error('Canonical SRKL auth URL is required.');
-    this.baseUrl = baseUrl.trim().replace(/\/+$/, '');
+    this.baseUrl = baseUrl.trim().replace(/\\/+$/, '');
+    this.fetcher = fetcher;
   }
 
   private async post(path: string, body: Record<string, unknown>): Promise<CanonicalAuthResult> {

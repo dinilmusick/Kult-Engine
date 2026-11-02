@@ -32,6 +32,19 @@ export const apiClient = {
     return res.json();
   },
 
+  async loadWorkspace(workspaceId: string) {
+    const res = await wrappedFetch('/api/db/workspace?workspaceId=' + encodeURIComponent(workspaceId));
+    return res.json();
+  },
+
+  async saveWorkspace(workspaceId: string, services: unknown[]) {
+    const res = await wrappedFetch('/api/db/workspace', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workspaceId, services }),
+    });
+    return res.json();
+  },
+
   async login() { return { success: false, error: 'Use canonical SRKL authentication.' }; },
 
   async register() { return { success: false, error: 'Use canonical SRKL authentication.' }; },

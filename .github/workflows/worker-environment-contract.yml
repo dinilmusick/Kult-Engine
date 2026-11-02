@@ -53,8 +53,8 @@ jobs:
               runtime_files.append(pathlib.Path("server.ts"))
           for source_path in runtime_files:
               source = source_path.read_text()
-              for variable in re.findall(r"process\\.env\\.([A-Z][A-Z0-9_]*)", source):
+              for variable in re.findall(r"process\.env\.([A-Z][A-Z0-9_]*)", source):
                   assert variable in allowed_env, f"{source_path} reads forbidden environment variable: {variable}"
-              assert not re.search(r"process\\.env\\s*\\[", source), f"{source_path} uses dynamic environment-variable access"
+              assert not re.search(r"process\.env\s*\[", source), f"{source_path} uses dynamic environment-variable access"
           print("Worker and runtime environment contract passed.")
           PY

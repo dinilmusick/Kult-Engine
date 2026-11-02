@@ -1,5 +1,5 @@
 import React from 'react';
-import { CodeValidationServiceFacade, WebContainerServiceFacade } from '@ultrst-armada/kloks/development';
+import { CodeValidationServiceFacade, WebContainerServiceFacade } from '@ultrst-armada/kloks/development/webcontainer';
 import type { ServiceDocument } from '../../../libraries/types/serviceIR';
 import type { FunctionalityAsset } from './functionalityEditorModel';
 import { buildExecutionProject } from './kultExecutionModel';

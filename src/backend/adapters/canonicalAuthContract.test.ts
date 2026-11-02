@@ -11,7 +11,7 @@ const backendFacade = fs.readFileSync(path.join(root, 'src/backend/DepmBackend.t
 
 test('Kult resolves identity only by validating a canonical SRKL bearer session', () => {
   assert.match(adapter, /api\/auth\/get-session/);
-  assert.match(adapter, /Authorization: `Bearer ${token}`/);
+  assert.ok(adapter.includes('Authorization: `Bearer ${token}`'));
   assert.match(adapter, /session\.user\?\.id/);
   assert.match(adapter, /token\.startsWith\(['"]sess::['"]\)/);
   assert.doesNotMatch(adapter, /Bearer sess::/);

@@ -135,7 +135,7 @@ export function buildExecutionProject(
     },
   };
   files['runner.ts'] = { file: { contents: buildRunnerSource(functionalityFiles) } };
-  files['tsconfig.json'] = { file: { contents: JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, skipLibCheck: true, noEmit: true }, include: ['runner.ts', 'functionalities/**/*.ts'] }, null, 2) };
+  files['tsconfig.json'] = {\n    file: {\n      contents: JSON.stringify({\n        compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, skipLibCheck: true, noEmit: true },\n        include: ['runner.ts', 'functionalities/**/*.ts'],\n      }, null, 2),\n    },\n  };
 
   void service;
   void targetFunctionalityId;

@@ -77,7 +77,7 @@ export const apiClient = {
   async saveStorageConnection(_userId: string, data: Record<string, unknown>) {
     const res = await wrappedFetch('/api/auth/storage/connections', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+      headers: { 'Content-Type': 'application/json',  },
       body: JSON.stringify(data),
     });
     return res.json();

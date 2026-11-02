@@ -37,8 +37,21 @@ export interface KultBrowserInspectionAdapter {
   }>;
 }
 
-export function createKultBrowserInspection(adapter: KultBrowserInspectionAdapter) {
+async function resolveKultInspector(adapter?: KultBrowserInspectionAdapter): Promise<KultBrowserInspectionAdapter> {
+  if (adapter) return adapter;
+  if (typeof window !== 'undefined') throw new Error('Playwright inspection must run in a Node.js engineering process.');
+  try {
+    const entry = '@ultrst-armada/kloks/browser-inspection';
+    const module = await import(entry) as unknown as { PlaywrightInspectionRuntime: new () => KultBrowserInspectionAdapter };
+    return new module.PlaywrightInspectionRuntime();
+  } catch {
+    throw new Error('Kloks browser-inspection is unavailable. Publish/install the shared inspector before running service UI inspection.');
+  }
+}
+
+export function createKultBrowserInspection(adapter?: KultBrowserInspectionAdapter) {
   return {
-    inspectServiceUI: (request: KultBrowserInspectionRequest) => adapter.inspect(request),
+    inspectServiceUI: async (request: KultBrowserInspectionRequest) =>
+      (await resolveKultInspector(adapter)).inspect(request),
   };
 }

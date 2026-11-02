@@ -33,7 +33,13 @@ export interface KultBrowserInspectionAdapter {
   inspect(request: KultBrowserInspectionRequest): Promise<{
     ok: boolean;
     errors: Array<{ kind: string; message: string }>;
+    logs: Array<{ type: string; message: string; url?: string; line?: number; column?: number }>;
     screenshots: string[];
+    reportPath?: string;
+    title?: string;
+    status?: number;
+    domSnapshot?: string;
+    checks?: Array<{ selector: string; passed: boolean; details?: string }>;
   }>;
 }
 

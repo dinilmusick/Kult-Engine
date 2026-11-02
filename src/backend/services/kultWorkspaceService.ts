@@ -61,6 +61,8 @@ function safeUser(row: any) {
     avatarGlyph: row.avatar_glyph, emailVerified: row.email_verified, trustLevel: row.trust_level, status: row.status || 'ACTIVE' };
 }
 
+export { systemDatabaseUrls };
+
 function workspaceList(row: any): KultWorkspace[] {
   const list = profiles(row).kult?.workspaces;
   return Array.isArray(list) ? list : [];

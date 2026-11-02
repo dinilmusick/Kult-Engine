@@ -27,7 +27,7 @@ export function App() {
     if (token || typeof window === "undefined") return;
     if (new URLSearchParams(window.location.search).get("auth") !== "google") return;
     const authBase = import.meta.env.VITE_SRKL_AUTH_BASE_URL || "https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app";
-    fetch(authBase.replace(/\\/+$/, "") + "/api/auth/get-session", { credentials: "include" })
+    fetch(authBase + "/api/auth/get-session", { credentials: "include" })
       .then(async (response) => response.ok ? response.json() : null)
       .then((session) => {
         const canonicalToken = session?.session?.token;
@@ -149,7 +149,7 @@ export function App() {
               const currentToken = sessionStorage.getItem("kultCanonicalSessionToken");
               if (currentToken) {
                 const authBase = import.meta.env.VITE_SRKL_AUTH_BASE_URL || "https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app";
-                void fetch(authBase.replace(/\\/+$/, "") + "/api/auth/sign-out", {
+                void fetch(authBase + "/api/auth/sign-out", {
                   method: "POST",
                   credentials: "include",
                   headers: { "Content-Type": "application/json", Authorization: "Bearer " + currentToken },

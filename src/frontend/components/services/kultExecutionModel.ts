@@ -129,11 +129,20 @@ export function buildExecutionProject(
         private: true,
         type: 'module',
         dependencies,
+        scripts: { lint: 'tsc --noEmit', build: 'tsc --noEmit' },
         devDependencies: { tsx: '^4.21.0', typescript: '^5.8.2' },
       }, null, 2),
     },
   };
   files['runner.ts'] = { file: { contents: buildRunnerSource(functionalityFiles) } };
+  files['tsconfig.json'] = {
+    file: {
+      contents: JSON.stringify({
+        compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, skipLibCheck: true, noEmit: true },
+        include: ['runner.ts', 'functionalities/**/*.ts'],
+      }, null, 2),
+    },
+  };
 
   void service;
   void targetFunctionalityId;

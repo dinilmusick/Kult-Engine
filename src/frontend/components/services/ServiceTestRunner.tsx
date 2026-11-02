@@ -4,6 +4,7 @@ import type { ServiceDocument } from '../../../libraries/types/serviceIR';
 import type { FunctionalityAsset } from './functionalityEditorModel';
 import { buildExecutionProject } from './kultExecutionModel';
 import { WebContainerServiceFacade } from '@ultrst-armada/kloks/development';
+import { ServiceDiagnosticsPanel } from './ServiceDiagnosticsPanel';
 import { parseExecutionResult } from './kultExecutionModel';
 
 export const ServiceTestRunner: React.FC<{
@@ -19,6 +20,7 @@ export const ServiceTestRunner: React.FC<{
   const [running, setRunning] = React.useState(false);
   const [logs, setLogs] = React.useState('');
   const [result, setResult] = React.useState<{ ok: boolean; output?: unknown; error?: string; durationMs?: number } | null>(null);
+  const [showDiagnostics, setShowDiagnostics] = React.useState(false);
 
   const selectedFunctionality = functionalities.find(item => item.id === targetId);
   const selectedOrchestration = orchestrations.find(item => item.id === orchestrationId);
@@ -66,6 +68,8 @@ export const ServiceTestRunner: React.FC<{
     }
   }
 
+  if (showDiagnostics) return <ServiceDiagnosticsPanel service={service} functionalities={functionalities} targetId={targetId} onClose={() => setShowDiagnostics(false)} />;
+
   return (
     <div className="fixed inset-0 z-[90] bg-black/70 flex items-center justify-center p-4">
       <div className="w-full h-full max-w-6xl max-h-[92vh] rounded border border-[var(--skipo-border-color)]/40 bg-[var(--skipo-surface)] text-[var(--skipo-text)] flex flex-col overflow-hidden">
@@ -74,7 +78,7 @@ export const ServiceTestRunner: React.FC<{
             <div className="font-black text-sm">Run Service</div>
             <div className="text-[9px] text-[var(--skipo-text-muted)]">Node.js execution inside the canonical Kloks WebContainer service</div>
           </div>
-          <button onClick={onClose} className="px-3 py-1.5 rounded border text-[10px]">Close</button>
+          <div className="flex gap-2"><button onClick={() => setShowDiagnostics(true)} className="px-3 py-1.5 rounded border text-[10px]">Run diagnostics</button><button onClick={onClose} className="px-3 py-1.5 rounded border text-[10px]">Close</button></div>
         </header>
 
         <div className="grid grid-cols-2 gap-3 p-3 border-b border-[var(--skipo-border-color)]/30">

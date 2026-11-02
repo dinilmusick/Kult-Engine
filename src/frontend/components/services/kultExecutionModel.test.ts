@@ -26,7 +26,11 @@ test('builds an executable WebContainer project with runtime dependencies and co
   const project = buildExecutionProject(service(), [fn], 'echo');
   const packageJson = JSON.parse(project.files['package.json'].file.contents);
   const runner = project.files['runner.ts'].file.contents;
+  const tsconfig = JSON.parse(project.files['tsconfig.json'].file.contents);
 
+  assert.deepEqual(packageJson.scripts, { lint: 'tsc --noEmit', build: 'tsc --noEmit' });
+  assert.equal(tsconfig.compilerOptions.strict, true);
+  assert.equal(tsconfig.compilerOptions.noEmit, true);
   assert.deepEqual(packageJson.dependencies, {
     '@ultrst-armada/gutts': 'latest',
     zod: 'latest',

@@ -9,7 +9,6 @@ export function getVaultKey(req: Request, url: URL, userId: string): string {
   const headerKey = req.headers.get('x-vault-key');
   if (headerKey) return headerKey.trim();
   const auth = req.headers.get('authorization') || '';
-  if (auth.startsWith('Bearer ')) return auth.slice(7).trim();
   return `depm_vault_${userId || 'default_session'}`;
 }
 
@@ -23,6 +22,8 @@ export async function handleVaultRoutes(
 ): Promise<Response | null> {
   const { pathname } = url;
   const { method } = request;
+  const protectedRoute = pathname === '/api/srkl/accounts/sync' || pathname === '/api/workspace/accounts' || pathname === '/api/vault/credentials' || pathname.startsWith('/api/vault/credentials/');
+  if (protectedRoute && !userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
   const vaultKey = getVaultKey(request, url, userId);
 
   // 1. Sync accounts from SRKL into active workspace vault

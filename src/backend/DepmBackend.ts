@@ -12,6 +12,7 @@ import type { ServiceDocument } from "../libraries/types/serviceIR";
 import { skipoAgentService } from '../libraries/services/skipoAgent';
 import {
   getWorkspaces as getKultWorkspaces,
+  findUserWorkspace as findKultUserWorkspace,
   createWorkspace as createKultWorkspace,
   updateWorkspace as updateKultWorkspace,
   deleteWorkspace as deleteKultWorkspace,
@@ -51,8 +52,8 @@ export const DepmBackend = {
       async renameAppInWorkspaceData(userId: string, wsId: string, appId: string, newName: string, _env: any = {}) {
         return { success: true, updated: { appId, newName } };
       },
-      async findUserWorkspace(wsId: string, _env: any = {}) {
-        return { workspace: { id: wsId, name: "Kult Workspace" }, connection: null };
+      async findUserWorkspace(wsId: string, userId: string, env: any = {}) {
+        return findKultUserWorkspace(userId, wsId, env);
       },
     },
 

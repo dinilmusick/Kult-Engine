@@ -7,13 +7,9 @@ import { BullMQAdapter } from '../../libraries/skipo/systems/execution/BullMQAda
 import { ExecutionJob, JobPriority } from '../../libraries/skipo/systems/execution/types';
 import { DispatchCommandSchema, formatZodError, CommandPriority } from '../../libraries/validation/schemas';
 
-const REDIS_HOST = process.env.REDIS_HOST;
-const REDIS_PORT = process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT, 10) : undefined;
-
 export const commandQueueAdapter = new BullMQAdapter({
   queueName: 'skipo-command-queue',
-  connection: REDIS_HOST ? { host: REDIS_HOST, port: REDIS_PORT || 6379 } : undefined,
-  useInMemory: !REDIS_HOST,
+  useInMemory: true,
   maxConcurrency: 5,
 });
 

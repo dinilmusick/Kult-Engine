@@ -59,7 +59,7 @@ export function App() {
 
   const loadWorkspace = async (workspaceId: string) => {
     try {
-      const data = await fetch("/api/db/workspace?workspaceId=" + encodeURIComponent(workspaceId) + "&userId=" + encodeURIComponent(userId || "")).then(r => r.json());
+      const data = await apiClient.loadWorkspace(workspaceId);
       const services = Array.isArray(data?.data?.services)
         ? data.data.services
         : STARTER_SERVICES.map(document => ({
@@ -106,11 +106,7 @@ export function App() {
     setLocalServices((prev) => prev.some((item) => item.id === next.id) ? prev : [...prev, next]);
     if (activeWorkspaceId) {
       const merged = localServices.some((item) => item.id === next.id) ? localServices : [...localServices, next];
-      await fetch("/api/db/workspace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
-        body: JSON.stringify({ workspaceId: activeWorkspaceId, services: merged }),
-      });
+      await apiClient.saveWorkspace(activeWorkspaceId, merged);
     }
   };
 
@@ -118,11 +114,7 @@ export function App() {
     const next = localServices.map(x => x.id === s.id ? s : x);
     if (!next.some(x => x.id === s.id)) next.push(s);
     setLocalServices(next);
-    await fetch("/api/db/workspace", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
-      body: JSON.stringify({ workspaceId: activeWorkspaceId, services: next })
-    });
+    await apiClient.saveWorkspace(activeWorkspaceId, next);
   };
 
   const handleDeleteWorkspace = async (id: string) => {
@@ -198,11 +190,7 @@ export function App() {
               };
               setLocalServices(prev => [...prev, created]);
               if (activeWorkspaceId) {
-                void fetch("/api/db/workspace", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
-                  body: JSON.stringify({ workspaceId: activeWorkspaceId, services: [...localServices, created] })
-                });
+                void apiClient.saveWorkspace(activeWorkspaceId, [...localServices, created]);
               }
             }}
             onSave={handleSaveLocalService}

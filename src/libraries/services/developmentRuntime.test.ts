@@ -36,7 +36,7 @@ test('Kult propagates Playwright service-UI inspection errors and screenshots', 
   const inspector = createKultBrowserInspection({
     inspect: async request => {
       received = request;
-      return { ok: false, errors: [{ kind: 'pageerror', message: 'service editor crashed' }], screenshots: ['artifacts/service-editor.png'] };
+      return { ok: false, errors: [{ kind: 'pageerror', message: 'service editor crashed' }], logs: [{ type: 'warning', message: 'service editor warning' }], screenshots: ['artifacts/service-editor.png'] };
     },
   });
   const request = { url: 'http://localhost:4173/service-editor', captureDom: true };
@@ -44,6 +44,7 @@ test('Kult propagates Playwright service-UI inspection errors and screenshots', 
   assert.deepEqual(received, request);
   assert.equal(result.ok, false);
   assert.equal(result.errors[0]?.kind, 'pageerror');
+  assert.equal(result.logs[0]?.type, 'warning');
   assert.equal(result.screenshots[0], 'artifacts/service-editor.png');
 });
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { KultCanonicalAuthClient } from './canonicalAuthClient';
+import { KultCanonicalAuthClient } from './canonicalAuthClient.js';
 
 test('email sign-in reads the canonical bearer token from Better Auth headers', async () => {
   let request: { url: string; init?: RequestInit } | undefined;

@@ -16,7 +16,7 @@ import { adaptNodeRequest } from './src/backend/adapters/nodeBridge';
 const PORT = 3000;
 
 async function startServer() {
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = !process.argv[1]?.endsWith('.ts');
   let vite: any = null;
 
   if (!isProd) {

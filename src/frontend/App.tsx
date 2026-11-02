@@ -25,7 +25,6 @@ export function App() {
 
   useEffect(() => {
     if (token || typeof window === "undefined") return;
-    if (new URLSearchParams(window.location.search).get("auth") !== "google") return;
     const authBase = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_SRKL_AUTH_BASE_URL || "https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app";
     fetch(authBase + "/api/auth/get-session", { credentials: "include" })
       .then(async (response) => response.ok ? response.json() : null)

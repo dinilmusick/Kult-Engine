@@ -29,3 +29,20 @@ test('Kult imports the canonical Kloks WebContainer service surface', async () =
   const operationNames = Object.values(WebContainerServiceDefinition.operations as Record<string, { name: string }>).map(operation => operation.name);
   assert.deepEqual(operationNames, ['boot', 'mount', 'run', 'runCommand', 'teardown', 'command']);
 });
+
+test('Kult propagates Playwright service-UI inspection errors and screenshots', async () => {
+  const { createKultBrowserInspection } = await import('./developmentRuntime.js');
+  let received: unknown;
+  const inspector = createKultBrowserInspection({
+    inspect: async request => {
+      received = request;
+      return { ok: false, errors: [{ kind: 'pageerror', message: 'service editor crashed' }], screenshots: ['artifacts/service-editor.png'] };
+    },
+  });
+  const request = { url: 'http://localhost:4173/service-editor', captureDom: true };
+  const result = await inspector.inspectServiceUI(request);
+  assert.deepEqual(received, request);
+  assert.equal(result.ok, false);
+  assert.equal(result.errors[0]?.kind, 'pageerror');
+  assert.equal(result.screenshots[0], 'artifacts/service-editor.png');
+});

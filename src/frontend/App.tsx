@@ -15,8 +15,8 @@ import { apiClient } from "../libraries/client/apiClient";
 import { useAppStore } from "../frontend-state/appStore";
 
 export function App() {
-  const [token, setToken] = useState<string | null>(() => typeof window !== "undefined" ? localStorage.getItem("kultAuthToken") : null);
-  const [userId, setUserId] = useState<string | null>(() => typeof window !== "undefined" ? localStorage.getItem("kultUserId") : null);
+  const [token, setToken] = useState<string | null>(() => typeof window !== "undefined" ? sessionStorage.getItem("kultCanonicalSessionToken") : null);
+  const [userId, setUserId] = useState<string | null>(() => typeof window !== "undefined" ? sessionStorage.getItem("kultCanonicalUserId") : null);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [workspaces, setWorkspaces] = useState<WorkspaceRecord[]>([]);
   const { setActiveWorkspace } = useAppStore();
@@ -122,8 +122,8 @@ export function App() {
               if (!res.token || !res.user) return;
               setToken(res.token);
               setUserId(res.user.id);
-              localStorage.setItem("kultAuthToken", res.token);
-              localStorage.setItem("kultUserId", res.user.id);
+              sessionStorage.setItem("kultCanonicalSessionToken", res.token);
+              sessionStorage.setItem("kultCanonicalUserId", res.user.id);
             }}
           />
         ) : !activeWorkspaceId ? (
@@ -141,8 +141,8 @@ export function App() {
               setActiveWorkspace(null);
               setShowServices(false);
               setLocalServices([]);
-              localStorage.removeItem("kultAuthToken");
-              localStorage.removeItem("kultUserId");
+              sessionStorage.removeItem("kultCanonicalSessionToken");
+              sessionStorage.removeItem("kultCanonicalUserId");
             }}
           />
         ) : showServices ? (

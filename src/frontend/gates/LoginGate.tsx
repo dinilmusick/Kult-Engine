@@ -7,7 +7,9 @@
 // @skipo:origin GENERATED
 import React from 'react';
 import { AuthPage, type AuthResult } from '@ultrst-armada/floks/ui';
-import { apiClient } from '../../libraries/client/apiClient';
+import { KultCanonicalAuthClient } from '../../libraries/client/canonicalAuthClient';
+
+const authClient = new KultCanonicalAuthClient((import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_SRKL_AUTH_BASE_URL || 'https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app');
 
 export interface LoginGateProps {
   appName?: string;
@@ -21,22 +23,18 @@ export const LoginGate: React.FC<LoginGateProps> = ({ appName = 'KULT ENGINE', o
       appSubtitle="APPLICATION COMPONENT FORGE"
       footerText="Ultrst Armada • Governed by Skipo"
       onLogin={async (email, password) => {
-        const data = await apiClient.login(email, password);
-        return {
-          success: Boolean(data?.success && data?.user),
-          error: data?.error,
-          user: data?.user,
-          token: data?.token,
-        };
+        const result = await authClient.signInEmail(email, password);
+        return { success: result.success, error: result.error, user: result.user, token: result.token };
       }}
       onRegister={async ({ name, email, password }) => {
-        const data = await apiClient.register({ name, email, password });
-        return {
-          success: Boolean(data?.success && data?.user),
-          error: data?.error,
-          user: data?.user,
-          token: data?.token,
-        };
+        const result = await authClient.signUpEmail(email, password, name);
+        return { success: result.success, error: result.error, user: result.user, token: result.token };
+      }}
+      onGoogleSignIn={async () => {
+        const callbackURL = window.location.origin + '/?auth=google';
+        const result = await authClient.signInGoogle(callbackURL);
+        if (result.success && result.redirectUrl) window.location.assign(result.redirectUrl);
+        return { success: result.success, error: result.error, redirectUrl: result.redirectUrl };
       }}
       onSuccess={onSuccess}
     />

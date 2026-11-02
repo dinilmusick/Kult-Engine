@@ -15,13 +15,31 @@ import { apiClient } from "../libraries/client/apiClient";
 import { useAppStore } from "../frontend-state/appStore";
 
 export function App() {
-  const [token, setToken] = useState<string | null>(() => typeof window !== "undefined" ? localStorage.getItem("kultAuthToken") : null);
-  const [userId, setUserId] = useState<string | null>(() => typeof window !== "undefined" ? localStorage.getItem("kultUserId") : null);
+  const [token, setToken] = useState<string | null>(() => typeof window !== "undefined" ? sessionStorage.getItem("kultCanonicalSessionToken") : null);
+  const [userId, setUserId] = useState<string | null>(() => typeof window !== "undefined" ? sessionStorage.getItem("kultCanonicalUserId") : null);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [workspaces, setWorkspaces] = useState<WorkspaceRecord[]>([]);
   const { setActiveWorkspace } = useAppStore();
   const [showServices, setShowServices] = useState(false);
   const [localServices, setLocalServices] = useState<LocalServiceRecord[]>([]);
+
+  useEffect(() => {
+    if (token || typeof window === "undefined") return;
+    const authBase = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_SRKL_AUTH_BASE_URL || "https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app";
+    fetch(authBase + "/api/auth/get-session", { credentials: "include" })
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((session) => {
+        const canonicalToken = session?.session?.token;
+        const canonicalUser = session?.user;
+        if (!canonicalToken || !canonicalUser?.id) return;
+        sessionStorage.setItem("kultCanonicalSessionToken", canonicalToken);
+        sessionStorage.setItem("kultCanonicalUserId", canonicalUser.id);
+        setToken(canonicalToken);
+        setUserId(canonicalUser.id);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      })
+      .catch((error) => console.error("Canonical Google session restoration failed", error));
+  }, [token]);
 
   useEffect(() => {
     if (!token || !userId) return;
@@ -40,7 +58,7 @@ export function App() {
 
   const loadWorkspace = async (workspaceId: string) => {
     try {
-      const data = await fetch("/api/db/workspace?workspaceId=" + encodeURIComponent(workspaceId) + "&userId=" + encodeURIComponent(userId || "")).then(r => r.json());
+      const data = await apiClient.loadWorkspace(workspaceId);
       const services = Array.isArray(data?.data?.services)
         ? data.data.services
         : STARTER_SERVICES.map(document => ({
@@ -87,11 +105,7 @@ export function App() {
     setLocalServices((prev) => prev.some((item) => item.id === next.id) ? prev : [...prev, next]);
     if (activeWorkspaceId) {
       const merged = localServices.some((item) => item.id === next.id) ? localServices : [...localServices, next];
-      await fetch("/api/db/workspace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
-        body: JSON.stringify({ workspaceId: activeWorkspaceId, services: merged }),
-      });
+      await apiClient.saveWorkspace(activeWorkspaceId, merged);
     }
   };
 
@@ -99,11 +113,7 @@ export function App() {
     const next = localServices.map(x => x.id === s.id ? s : x);
     if (!next.some(x => x.id === s.id)) next.push(s);
     setLocalServices(next);
-    await fetch("/api/db/workspace", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
-      body: JSON.stringify({ workspaceId: activeWorkspaceId, services: next })
-    });
+    await apiClient.saveWorkspace(activeWorkspaceId, next);
   };
 
   const handleDeleteWorkspace = async (id: string) => {
@@ -122,8 +132,8 @@ export function App() {
               if (!res.token || !res.user) return;
               setToken(res.token);
               setUserId(res.user.id);
-              localStorage.setItem("kultAuthToken", res.token);
-              localStorage.setItem("kultUserId", res.user.id);
+              sessionStorage.setItem("kultCanonicalSessionToken", res.token);
+              sessionStorage.setItem("kultCanonicalUserId", res.user.id);
             }}
           />
         ) : !activeWorkspaceId ? (
@@ -135,14 +145,24 @@ export function App() {
             onDeleteWorkspace={handleDeleteWorkspace}
             userId={userId}
             onLogout={() => {
+              const currentToken = sessionStorage.getItem("kultCanonicalSessionToken");
+              if (currentToken) {
+                const authBase = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_SRKL_AUTH_BASE_URL || "https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app";
+                void fetch(authBase + "/api/auth/sign-out", {
+                  method: "POST",
+                  credentials: "include",
+                  headers: { "Content-Type": "application/json", Authorization: "Bearer " + currentToken },
+                  body: "{}",
+                });
+              }
               setToken(null);
               setUserId(null);
               setActiveWorkspaceId(null);
               setActiveWorkspace(null);
               setShowServices(false);
               setLocalServices([]);
-              localStorage.removeItem("kultAuthToken");
-              localStorage.removeItem("kultUserId");
+              sessionStorage.removeItem("kultCanonicalSessionToken");
+              sessionStorage.removeItem("kultCanonicalUserId");
             }}
           />
         ) : showServices ? (
@@ -169,11 +189,7 @@ export function App() {
               };
               setLocalServices(prev => [...prev, created]);
               if (activeWorkspaceId) {
-                void fetch("/api/db/workspace", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", "x-user-id": userId || "" },
-                  body: JSON.stringify({ workspaceId: activeWorkspaceId, services: [...localServices, created] })
-                });
+                void apiClient.saveWorkspace(activeWorkspaceId, [...localServices, created]);
               }
             }}
             onSave={handleSaveLocalService}

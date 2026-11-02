@@ -9,7 +9,10 @@ async function wrappedFetch(url: string, init?: RequestInit): Promise<Response> 
   const store = useInspectionStore.getState();
   store.incrementApiCount();
   try {
-    const res = await fetch(url, init);
+    const headers = new Headers(init?.headers || {});
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('kultCanonicalSessionToken') : null;
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+    const res = await fetch(url, { ...init, headers });
     return res;
   } finally {
     store.decrementApiCount();
@@ -22,56 +25,51 @@ export const apiClient = {
     return res.json();
   },
 
-  async copyKloksServiceLocally(serviceId: string, userId: string) {
+  async copyKloksServiceLocally(serviceId: string, _userId?: string) {
     const res = await wrappedFetch('/api/kult/kloks/services/' + encodeURIComponent(serviceId) + '/copy', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
     });
     return res.json();
   },
 
-  async login(email?: string, password?: string, isAdmin: boolean = false) {
-    const res = await wrappedFetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, isAdmin }),
+  async loadWorkspace(workspaceId: string) {
+    const res = await wrappedFetch('/api/db/workspace?workspaceId=' + encodeURIComponent(workspaceId));
+    return res.json();
+  },
+
+  async saveWorkspace(workspaceId: string, services: unknown[]) {
+    const res = await wrappedFetch('/api/db/workspace', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workspaceId, services }),
     });
     return res.json();
   },
 
-  async register(data: { name: string; email: string; password: string; role?: string }) {
-    const res = await wrappedFetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+  async login() { return { success: false, error: 'Use canonical SRKL authentication.' }; },
+
+  async register() { return { success: false, error: 'Use canonical SRKL authentication.' }; },
+
+  async getWorkspaces(_userId?: string) {
+    const res = await wrappedFetch('/api/auth/workspaces');
     return res.json();
   },
 
-  async getWorkspaces(userId?: string) {
-    const headers: Record<string, string> = {};
-    if (userId) headers['x-user-id'] = userId;
-    const res = await wrappedFetch('/api/auth/workspaces', { headers });
+  async deleteWorkspace(_userId: string, workspaceId: string) {
+    const res = await wrappedFetch('/api/auth/workspaces?workspaceId=' + encodeURIComponent(workspaceId), { method: 'DELETE' });
     return res.json();
   },
 
-  async deleteWorkspace(userId: string, workspaceId: string) {
-    const res = await wrappedFetch('/api/auth/workspaces?userId=' + encodeURIComponent(userId) + '&workspaceId=' + encodeURIComponent(workspaceId), { method: 'DELETE' });
-    return res.json();
-  },
-
-  async createWorkspace(userId: string, data: Record<string, unknown>) {
+  async createWorkspace(_userId: string, data: Record<string, unknown>) {
     const res = await wrappedFetch('/api/auth/workspaces', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
     return res.json();
   },
 
-  async getSrklBackblazeAccounts(userId?: string) {
-    const headers: Record<string, string> = {};
-    if (userId) headers['x-user-id'] = userId;
-    const res = await wrappedFetch('/api/srkl/backblaze/accounts', { headers });
+  async getSrklBackblazeAccounts(_userId?: string) {
+    const res = await wrappedFetch('/api/srkl/backblaze/accounts');
     return res.json();
   },
 
@@ -84,17 +82,15 @@ export const apiClient = {
     return res.json();
   },
 
-  async getStorageConnections(userId?: string) {
-    const headers: Record<string, string> = {};
-    if (userId) headers['x-user-id'] = userId;
-    const res = await wrappedFetch('/api/auth/storage/connections', { headers });
+  async getStorageConnections(_userId?: string) {
+    const res = await wrappedFetch('/api/auth/storage/connections');
     return res.json();
   },
 
-  async saveStorageConnection(userId: string, data: Record<string, unknown>) {
+  async saveStorageConnection(_userId: string, data: Record<string, unknown>) {
     const res = await wrappedFetch('/api/auth/storage/connections', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+      headers: { 'Content-Type': 'application/json',  },
       body: JSON.stringify(data),
     });
     return res.json();

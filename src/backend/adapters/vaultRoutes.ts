@@ -8,8 +8,6 @@ import { DepmBackend } from '../DepmBackend';
 export function getVaultKey(req: Request, url: URL, userId: string): string {
   const headerKey = req.headers.get('x-vault-key');
   if (headerKey) return headerKey.trim();
-  const auth = req.headers.get('authorization') || '';
-  if (auth.startsWith('Bearer ')) return auth.slice(7).trim();
   return `depm_vault_${userId || 'default_session'}`;
 }
 
@@ -23,6 +21,8 @@ export async function handleVaultRoutes(
 ): Promise<Response | null> {
   const { pathname } = url;
   const { method } = request;
+  const protectedRoute = pathname === '/api/srkl/accounts/sync' || pathname === '/api/workspace/accounts' || pathname === '/api/vault/credentials' || pathname.startsWith('/api/vault/credentials/');
+  if (protectedRoute && !userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
   const vaultKey = getVaultKey(request, url, userId);
 
   // 1. Sync accounts from SRKL into active workspace vault
@@ -54,7 +54,7 @@ export async function handleVaultRoutes(
   // 3. Vault credentials CRUD
   if (pathname === '/api/vault/credentials') {
     const wsId = url.searchParams.get('workspaceId');
-    const { workspace, connection } = wsId ? await DepmBackend.services.workspace.findUserWorkspace(wsId, env) : { workspace: null, connection: null };
+    const { workspace, connection } = wsId ? await DepmBackend.services.workspace.findUserWorkspace(wsId, userId, env) : { workspace: null, connection: null };
     if (!workspace) return jsonRes({ success: false, error: 'Valid workspaceId is required' }, 400);
 
     if (method === 'GET') {
@@ -72,7 +72,7 @@ export async function handleVaultRoutes(
   if (credMatch) {
     const credId = credMatch[1];
     const wsId = url.searchParams.get('workspaceId');
-    const { workspace, connection } = wsId ? await DepmBackend.services.workspace.findUserWorkspace(wsId, env) : { workspace: null, connection: null };
+    const { workspace, connection } = wsId ? await DepmBackend.services.workspace.findUserWorkspace(wsId, userId, env) : { workspace: null, connection: null };
     if (!workspace) return jsonRes({ success: false, error: 'Valid workspaceId is required' }, 400);
 
     if (method === 'GET') {

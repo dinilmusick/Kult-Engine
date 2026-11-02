@@ -1,6 +1,5 @@
 import { queryUnifiedDb } from '@ultrst-armada/kloks/backend';
 import { neon } from '@neondatabase/serverless';
-import bcrypt from 'bcryptjs';
 
 export type WorkspaceStorageProvider = 'local_fs' | 'backblaze_b2';
 export interface KultWorkspace {
@@ -62,26 +61,7 @@ function safeUser(row: any) {
     avatarGlyph: row.avatar_glyph, emailVerified: row.email_verified, trustLevel: row.trust_level, status: row.status || 'ACTIVE' };
 }
 
-function passwordMatches(password: string, row: any) {
-  const stored = row && (row.password_hash || row.passwordHash || row.password);
-  if (!stored) return false;
-  if (/^\\$2[aby]?\\$/.test(String(stored))) return bcrypt.compareSync(password, String(stored));
-  return String(stored) === password;
-}
-
 export { systemDatabaseUrls };
-
-export async function loginUser(identifier: string, password: string, env: any = {}) {
-  if (!String(identifier || '').trim()) return { success: false, status: 400, error: 'Email address or username is required.' };
-  if (!password) return { success: false, status: 400, error: 'Password is required to sign in.' };
-  try {
-    const row = await findUser(identifier, env);
-    if (!row || !passwordMatches(password, row)) return { success: false, status: 401, error: 'Invalid email or password.' };
-    const user = safeUser(row);
-    const token = 'sess::' + user.id + '::' + Date.now() + '::' + Math.random().toString(36).slice(2, 10);
-    return { success: true, status: 200, user, token };
-  } catch (error: any) { return { success: false, status: 503, error: error?.message || 'System database unavailable.' }; }
-}
 
 function workspaceList(row: any): KultWorkspace[] {
   const list = profiles(row).kult?.workspaces;
@@ -104,6 +84,13 @@ function normalize(input: any, existing?: KultWorkspace): KultWorkspace {
     localFolderName: input.localFolderName ?? existing?.localFolderName, localFolderKey: input.localFolderKey ?? existing?.localFolderKey,
     b2BucketName: input.b2BucketName ?? existing?.b2BucketName, b2Endpoint: input.b2Endpoint ?? existing?.b2Endpoint,
     b2Region: input.b2Region ?? existing?.b2Region, createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
+}
+
+export async function findUserWorkspace(identifier: string, workspaceId: string, env: any = {}) {
+  const row = await findUser(identifier, env);
+  if (!row) return { workspace: null, connection: null };
+  const workspace = workspaceList(row).find((item) => item.id === workspaceId) || null;
+  return { workspace, connection: null };
 }
 
 export async function getWorkspaces(identifier: string, env: any = {}) {

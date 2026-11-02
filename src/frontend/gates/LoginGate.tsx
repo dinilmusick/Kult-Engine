@@ -10,7 +10,7 @@ import { AuthPage, type AuthResult } from '@ultrst-armada/floks/ui';
 import { CanonicalAuthClient } from '@ultrst-armada/kloks/backend';
 
 const authClient = new CanonicalAuthClient({
-  baseUrl: import.meta.env.VITE_SRKL_AUTH_BASE_URL || 'https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app',
+  baseUrl: (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_SRKL_AUTH_BASE_URL || 'https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app',
 });
 
 export interface LoginGateProps {

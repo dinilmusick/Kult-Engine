@@ -78,6 +78,8 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
 
   // 2. Workspace & Cloud Storage routes
   if (pathname === '/api/workspace/storage-details' && method === 'GET') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     const wsId = url.searchParams.get('workspaceId') || url.searchParams.get('id') || '';
     return jsonRes(await DepmBackend.services.workspace.getWorkspaceStorageDetails(wsId, env));
   }
@@ -121,6 +123,8 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     return jsonRes(await DepmBackend.services.srkl.getSrklAccounts(userId, 'backblaze', env));
   }
   if (pathname === '/api/srkl/backblaze/buckets' && method === 'POST') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     return jsonRes(await DepmBackend.services.srkl.listBackblazeBuckets(await parseBody(request)));
   }
 
@@ -141,6 +145,8 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     return jsonRes(await DepmBackend.services.storage.deleteStorageConnection(userId, connDelMatch[1], env));
   }
   if ((pathname === '/api/storage/test' || pathname === '/api/auth/storage/test') && method === 'POST') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     return jsonRes(await DepmBackend.services.storage.testStorageConnection((await parseBody(request)).connection || await parseBody(request)));
   }
 
@@ -201,27 +207,39 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     }
   }
   if (pathname === '/api/kult/kloks/services' && method === 'GET') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     const { discoverKloksAssets } = await import('../../libraries/services/assetDiscovery');
     return jsonRes({ success: true, services: discoverKloksAssets().filter((a: any) => a.category === 'services').map((a: any) => ({ ...a, id: encodeURIComponent(a.export) })) });
   }
   const copyMatch = pathname.match(/^\/api\/kult\/kloks\/services\/([^/]+)\/copy$/);
   if (copyMatch && method === 'POST') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     const asset = getKloksServiceAsset(copyMatch[1]);
     if (!asset) return jsonRes({ success: false, status: 404, error: 'KLOKS service not found.' }, 404);
     return jsonRes({ success: true, service: createLocalServiceFromKloksAsset(asset) });
   }
 
   if (pathname === '/api/kult/validate' && method === 'POST') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     return jsonRes(DepmBackend.services.kult.validate((await parseBody(request)).document));
   }
   if (pathname === '/api/kult/execute' && method === 'POST') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     const b = await parseBody(request);
     return jsonRes(await DepmBackend.services.kult.execute(b.document, b.inputs));
   }
   if (pathname === '/api/kult/export' && method === 'POST') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     return jsonRes(DepmBackend.services.kult.exportArtifact((await parseBody(request)).document));
   }
   if (pathname === '/api/kult/promote' && method === 'POST') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     return jsonRes(await DepmBackend.services.kult.promote((await parseBody(request)).document));
   }
 

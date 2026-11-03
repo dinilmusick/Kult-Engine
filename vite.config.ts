@@ -10,6 +10,7 @@ export default defineConfig(() => {
       alias: {
         "@": path.resolve(__dirname, "."),
         "@ultrst-armada/krnl": path.resolve(__dirname, "src/polyfills/krnl-browser.ts"),
+        "@ultrst-armada/kloks/development": path.resolve(__dirname, "src/frontend/components/services/kloksDevelopmentClient.ts"),
         crypto: path.resolve(__dirname, "src/polyfills/crypto.ts"),
         child_process: path.resolve(__dirname, "src/polyfills/child_process.ts"),
         "node:child_process": path.resolve(__dirname, "src/polyfills/child_process.ts"),

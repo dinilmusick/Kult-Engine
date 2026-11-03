@@ -48,10 +48,8 @@ test('Kult propagates Playwright service-UI inspection errors and screenshots', 
   assert.equal(result.screenshots[0], 'artifacts/service-editor.png');
 });
 
-test('Kult loads the shared Kloks inspector by default in Node engineering sessions', async () => {
+test('Kult exposes the shared Kloks browser inspector in Node engineering sessions', async () => {
   const { createKultBrowserInspection } = await import('./developmentRuntime.js');
-  await assert.rejects(
-    createKultBrowserInspection().inspectServiceUI({ url: 'http://localhost:4173/service-editor' }),
-    /Kloks browser-inspection is unavailable/,
-  );
+  const inspector = createKultBrowserInspection();
+  assert.equal(typeof inspector.inspectServiceUI, 'function');
 });

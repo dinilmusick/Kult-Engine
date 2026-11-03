@@ -9,6 +9,7 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "."),
+        "@ultrst-armada/krnl": path.resolve(__dirname, "src/polyfills/krnl-browser.ts"),
         crypto: path.resolve(__dirname, "src/polyfills/crypto.ts"),
         child_process: path.resolve(__dirname, "src/polyfills/child_process.ts"),
         "node:child_process": path.resolve(__dirname, "src/polyfills/child_process.ts"),

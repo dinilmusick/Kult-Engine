@@ -30,6 +30,7 @@ importers:
       '@webcontainer/api':
         specifier: 1.6.4
         version: 1.6.4
+      '@ultrst-armada/kloks':
         specifier: ^1.24.3
         version: 1.24.3(@neondatabase/serverless@1.2.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
       '@ultrst-armada/krnl':

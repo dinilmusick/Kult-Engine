@@ -1,16 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * @file skipo-build.cjs
- * @description Single Universal Build Pipeline for Skipo framework applications.
- * Conforms to Law L22 (Single Build Pipeline).
- *
- * Compiles all targets into ONE universal artifact set:
- * 1. Frontend SPA (Vite) -> dist/
- * 2. Universal Polyglot Backend (esbuild) -> api/index.js
- *    (Serves Local Node, Vercel Serverless, and Cloudflare Workers identically)
- */
-
 const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -20,7 +9,6 @@ const rootDir = path.resolve(__dirname, '..');
 console.log('[skipo-build] Starting Universal Single-Pass Build...');
 const startTime = Date.now();
 
-// Ensure output directories exist
 fs.mkdirSync(path.join(rootDir, 'api'), { recursive: true });
 
 function run(cmd, desc) {
@@ -29,22 +17,18 @@ function run(cmd, desc) {
 }
 
 try {
-  // 1. Frontend SPA build
   run('npx vite build', 'Building Vite frontend assets');
 
-  // 2. Single Universal Polyglot Backend bundle
-  const nodeBuiltins = [
-    'http', 'https', 'fs', 'fs/promises', 'path', 'os', 'crypto',
-    'child_process', 'stream', 'util', 'events', 'dgram', 'net',
-    'tls', 'buffer', 'url', 'zlib', 'worker_threads',
-  ];
-  const externalFlags = [
-    "'--external:node:*'",
-    ...nodeBuiltins.map((mod) => `--external:${mod}`),
-  ].join(' ');
+  const serverBuiltins = [
+    'http', 'https', 'events', 'stream', 'buffer', 'fs', 'fs/promises', 'path',
+    'url', 'util', 'net', 'tls', 'zlib', 'os', 'child_process',
+    'crypto', 'worker_threads', 'cluster', 'dgram', 'dns', 'readline', 'vm',
+    'inspector', 'module', 'typescript',
+    '@aws-sdk/*', 'node:*', 'lucide-react',
+  ].map((mod) => `'--external:${mod}'`).join(' ');
 
   run(
-    `npx esbuild src/backend/adapters/universalEntry.ts --bundle --platform=neutral --format=esm --alias:crypto=node:crypto ${externalFlags} --outfile=api/index.js`,
+    `npx esbuild src/backend/adapters/universalEntry.ts --bundle --platform=neutral --main-fields=module,main --format=esm --alias:crypto=node:crypto --define:__filename='"index.js"' --define:__dirname='"/"' ${serverBuiltins} --outfile=api/index.js`,
     'Bundling Single Universal Polyglot Backend (api/index.js)'
   );
 

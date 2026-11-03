@@ -7,10 +7,10 @@ const frontendFiles = [
   'src/frontend/components/services/ServiceDiagnosticsPanel.tsx',
 ];
 
-test('frontend service tools use the browser-safe Kloks development client export', async () => {
+test('frontend service tools use the browser-safe development client', async () => {
   for (const file of frontendFiles) {
     const source = await readFile(file, 'utf8');
-    assert.match(source, /@ultrst-armada\/kloks\/development\/client/);
-    assert.doesNotMatch(source, /@ultrst-armada\/kloks\/development['"]/);
+    assert.match(source, /\.\/kloksDevelopmentClient/);
+    assert.doesNotMatch(source, /@ultrst-armada\/kloks\/development(?:\/client)?['"]/);
   }
 });

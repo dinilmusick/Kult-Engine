@@ -1,10 +1,10 @@
 import React from "react";
-import { Cloud, Server, ArrowLeft, Plus, Eye, Copy } from "lucide-react";
+import { Activity, Cloud, Server, ArrowLeft, Plus, Eye, Copy } from "lucide-react";
 import { LocalServicesMenu, type LocalServiceRecord } from "./LocalServicesMenu";
 import { ServiceEditor } from "./ServiceEditor";
-import { apiClient } from "../../../libraries/client/apiClient";
+import { apiClient } from "../../../libraries/client/apiClient";\nimport { CiDiagnosticsPanel } from "../engineering/CiDiagnosticsPanel";
 
-type View = "chooser" | "local" | "cloud";
+type View = "chooser" | "local" | "cloud" | "diagnostics";
 type CloudService = { id: string; name: string; description?: string; version?: string; packageName?: string };
 
 export const ServicesWorkspace: React.FC<{
@@ -53,7 +53,7 @@ export const ServicesWorkspace: React.FC<{
     );
   }
 
-  if (view === "cloud") {
+  if (view === "diagnostics") {\n    return (\n      <div className="h-full flex flex-col bg-[var(--skipo-bg)] text-[var(--skipo-text)]">\n        <div className="h-12 px-4 flex items-center border-b border-[var(--skipo-border-color)]/30 bg-[var(--skipo-surface)]">\n          <button onClick={() => setView("chooser")} className="flex items-center gap-1 text-xs"><ArrowLeft size={13}/> Services</button>\n          <span className="ml-4 font-black text-xs">Engineering Diagnostics</span>\n        </div>\n        <div className="flex-1"><CiDiagnosticsPanel /></div>\n      </div>\n    );\n  }\n\n  if (view === "cloud") {
     return (
       <div className="h-full flex flex-col bg-[var(--skipo-bg)] text-[var(--skipo-text)]">
         <div className="h-12 px-4 flex items-center border-b border-[var(--skipo-border-color)]/30 bg-[var(--skipo-surface)]">
@@ -113,7 +113,7 @@ export const ServicesWorkspace: React.FC<{
             <div className="text-[10px] text-[var(--skipo-text-muted)] mt-1">KLOKS services available as canonical, view-only assets.</div>
             <div className="mt-5 text-[9px]">KLOKS catalog</div>
           </button>
-          <button onClick={onCreate} className="text-left min-h-40 p-6 rounded-xl border border-dashed border-[var(--skipo-border-color)]/50 hover:border-[var(--skipo-accent)] md:col-span-2">
+          <button onClick={() => setView("diagnostics")} className="text-left min-h-40 p-6 rounded-xl border border-[var(--skipo-border-color)]/30 bg-[var(--skipo-surface)] hover:border-[var(--skipo-accent)]">\n            <Activity size={22} className="text-[var(--skipo-accent)] mb-5"/>\n            <div className="font-black text-lg">Diagnostics</div>\n            <div className="text-[10px] text-[var(--skipo-text-muted)] mt-1">Inspect build, CI and browser-inspection evidence.</div>\n            <div className="mt-5 text-[9px]">Engineering surface</div>\n          </button>\n          <button onClick={onCreate} className="text-left min-h-40 p-6 rounded-xl border border-dashed border-[var(--skipo-border-color)]/50 hover:border-[var(--skipo-accent)] md:col-span-2">
             <Plus size={22} className="mb-4"/>
             <div className="font-black">Create Local Service</div>
             <div className="text-[10px] text-[var(--skipo-text-muted)] mt-1">Start a new editable service in this workspace.</div>

@@ -53,23 +53,65 @@ export const WebContainerServiceFacade = {
 export const CodeValidationServiceFacade = {
   execute: async <TIn = unknown, TOut = unknown>(operation: string, input?: TIn): Promise<TOut> => {
     if (operation !== 'validate') throw new Error(`Unsupported validation operation: ${operation}`);
-    const value = input as { layers?: Array<'syntax' | 'lint' | 'test' | 'build'>; cwd?: string };
+    const value = input as {
+      files?: Files;
+      install?: boolean;
+      layers?: Array<'syntax' | 'lint' | 'test' | 'build' | 'krnl' | 'law-l9'>;
+      cwd?: string;
+    };
+    if (value.files) {
+      await WebContainerServiceFacade.execute('mount', { files: value.files, mountPoint: value.cwd });
+    }
+    const diagnostics: Array<{ layer: string; ok: boolean; exitCode: number; command: string; output: string }> = [];
+    if (value.install) {
+      const install = await WebContainerServiceFacade.execute<{
+        command: string;
+        args: string[];
+        cwd?: string;
+      }, Result>('runCommand', {
+        command: 'pnpm',
+        args: ['install', '--no-frozen-lockfile', '--ignore-scripts'],
+        cwd: value.cwd,
+      });
+      diagnostics.push({
+        layer: 'install',
+        ok: install.exitCode === 0,
+        exitCode: install.exitCode,
+        command: 'pnpm install --no-frozen-lockfile --ignore-scripts',
+        output: install.output,
+      });
+      if (install.exitCode !== 0) {
+        return {
+          ok: false,
+          diagnostics,
+          failedLayers: ['install'],
+        } as TOut;
+      }
+    }
     const layers = value.layers?.length ? value.layers : ['syntax', 'lint', 'test', 'build'];
     const commands: Record<string, { command: string; args: string[] }> = {
       syntax: { command: 'pnpm', args: ['exec', 'tsc', '--noEmit'] },
       lint: { command: 'pnpm', args: ['run', 'lint', '--if-present'] },
       test: { command: 'pnpm', args: ['run', 'test', '--if-present'] },
       build: { command: 'pnpm', args: ['run', 'build', '--if-present'] },
+      krnl: { command: 'pnpm', args: ['run', 'build', '--if-present'] },
+      'law-l9': { command: 'pnpm', args: ['run', 'lint', '--if-present'] },
     };
-    const diagnostics: Array<{ layer: string; ok: boolean; exitCode: number; command: string; output: string }> = [];
     for (const layer of layers) {
       const spec = commands[layer];
+      if (!spec) continue;
       const result = await WebContainerServiceFacade.execute<{ command: string; args: string[]; cwd?: string }, Result>('runCommand', {
         command: spec.command,
         args: spec.args,
         cwd: value.cwd,
       });
-      diagnostics.push({ layer, ok: result.exitCode === 0, exitCode: result.exitCode, command: [spec.command, ...spec.args].join(' '), output: result.output });
+      diagnostics.push({
+        layer,
+        ok: result.exitCode === 0,
+        exitCode: result.exitCode,
+        command: [spec.command, ...spec.args].join(' '),
+        output: result.output,
+      });
       if (result.exitCode !== 0) break;
     }
     return {

@@ -11,8 +11,50 @@ permissions:
 
 jobs:
   inspect:
-    uses: dinilmusick/Skipo/.github/workflows/preview-inspection.yml@main
-    with:
-      repository: ${{ github.repository }}
-      ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      manifest_path: skipo.browser-inspection.json
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install, lint, test and build the real app
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm lint
+          pnpm build
+      - name: Install isolated Playwright runtime
+        run: npm install --prefix /tmp/forge-playwright --no-save playwright@1.58.2
+      - name: Install Chromium
+        run: /tmp/forge-playwright/node_modules/.bin/playwright install --with-deps chromium
+      - name: Start production app preview
+        run: |
+          set -euo pipefail
+          PORT=3000 NODE_ENV=production nohup pnpm start > "$RUNNER_TEMP/app-server.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/app-server.pid"
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/app-server.log"
+          echo "App server did not become healthy within 120 seconds."
+          exit 1
+      - name: Inspect rendered routes at desktop and mobile viewports
+        env:
+          NODE_PATH: /tmp/forge-playwright/node_modules
+          PREVIEW_URL: http://127.0.0.1:3000
+        run: node scripts/inspect-app-preview.mjs
+      - name: Upload browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kult-browser-inspection
+          path: |
+            artifacts/browser-inspection/
+            ${{ runner.temp }}/app-server.log
+          if-no-files-found: warn
+          retention-days: 14

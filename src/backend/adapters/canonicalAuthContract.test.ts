@@ -9,12 +9,12 @@ const workspaceService = fs.readFileSync(path.join(root, 'src/backend/services/k
 const apiClient = fs.readFileSync(path.join(root, 'src/libraries/client/apiClient.ts'), 'utf8');
 const backendFacade = fs.readFileSync(path.join(root, 'src/backend/DepmBackend.ts'), 'utf8');
 
-test('Kult resolves identity only by validating a canonical SRKL bearer session', () => {
-  assert.match(adapter, /api\/auth\/get-session/);
+test('Kult resolves identity only by validating a canonical Luth bearer session', () => {
+  assert.match(adapter, /api\/session/);
   assert.ok(adapter.includes('Authorization: `Bearer ${token}`'));
   assert.match(adapter, /session\.user\?\.id/);
   assert.match(adapter, /token\.startsWith\(['"]sess::['"]\)/);
-  assert.doesNotMatch(adapter, /Bearer sess::/);
+  assert.doesNotMatch(adapter, /Bearer\\s+sess::/);
   assert.doesNotMatch(adapter, /req\.headers\.get\(['"]x-user-id['"]\)/i);
   assert.doesNotMatch(adapter, /searchParams\.get\(['"]userId['"]\)/i);
 });

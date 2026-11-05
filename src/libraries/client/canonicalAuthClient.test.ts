@@ -32,7 +32,7 @@ test('registration uses the canonical Better Auth sign-up endpoint', async () =>
   assert.equal(url, 'https://auth.example.com/api/auth/sign-up/email');
 });
 
-test('Google sign-in requests the provider redirect from SRKL', async () => {
+test('Google sign-in requests the provider redirect from Luth', async () => {
   let body: any;
   const fetcher = (async (_input: string | URL | Request, init?: RequestInit) => {
     body = JSON.parse(String(init?.body));

@@ -14,3 +14,6 @@ command = "npm run build"
 
 # Configure SYSTEM_DATABASE_URL_1 as a mandatory Cloudflare Worker Secret.
 # SYSTEM_DATABASE_URL_2 and SYSTEM_DATABASE_URL_3 are optional secret fallbacks.
+
+[vars]
+APP_URL = "https://kult-engine.blueprint-ninjastudios.workers.dev"

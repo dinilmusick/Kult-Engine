@@ -9,15 +9,14 @@ import { handleAgentRoutes } from '../agent/runtime';
 import { adaptNodeRequest } from './nodeBridge';
 import { handleVaultRoutes } from './vaultRoutes';
 import { createLocalServiceFromKloksAsset, getKloksServiceAsset } from '../../libraries/services/assetDiscovery';
+import { resolveUserFromToken } from '@ultrst-armada/kloks/backend';
 
 export interface Env {
   ENVIRONMENT?: string;
   APP_NAME?: string;
   DEPM_GATEWAY_DOMAIN?: string;
-  SYSTEM_DATABASE_URL_1?: string;
   SYSTEM_DATABASE_URL_2?: string;
   SYSTEM_DATABASE_URL_3?: string;
-  SRKL_AUTH_BASE_URL?: string;
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
   [key: string]: unknown;
 }
@@ -36,21 +35,11 @@ async function parseBody(req: Request): Promise<any> {
   try { return await req.json(); } catch { return {}; }
 }
 
-async function getUserId(req: Request, _url: URL, env: Env): Promise<string> {
+async function getUserId(req: Request, _url: URL, _env: Env): Promise<string> {
   const authorization = req.headers.get('authorization') || '';
-  const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1];
-  if (!token || token.startsWith('sess::')) return '';
-  const baseUrl = String(env.SRKL_AUTH_BASE_URL || 'https://srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app').replace(/\/+$/, '');
-  try {
-    const response = await fetch(`${baseUrl}/api/auth/get-session`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
-    if (!response.ok) return '';
-    const session = await response.json() as { user?: { id?: string } };
-    return typeof session.user?.id === 'string' ? session.user.id : '';
-  } catch {
-    return '';
-  }
+  if (!authorization) return '';
+  const principal = await resolveUserFromToken(authorization, async () => ({ rows: [] }));
+  return principal?.id || '';
 }
 
 export async function fetchHandler(request: Request, env: Env = {}): Promise<Response> {

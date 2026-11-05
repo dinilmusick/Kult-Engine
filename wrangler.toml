@@ -17,3 +17,6 @@ command = "npm run build"
 
 [vars]
 APP_URL = "https://kult-engine.blueprint-ninjastudios.workers.dev"
+
+[secrets]
+required = ["SYSTEM_DATABASE_URL"]

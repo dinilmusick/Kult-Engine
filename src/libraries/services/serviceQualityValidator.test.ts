@@ -3,7 +3,7 @@ import test from 'node:test';
 import { validateGeneratedService } from './serviceQualityValidator';
 
 test('accepts valid generated TypeScript', () => {
-  const result = validateGeneratedService([{ path: 'src/index.ts', content: 'export const run = (value: number) => value + 1;\n' }]);
+  const result = validateGeneratedService([{ path: 'src/index.ts', content: 'import { createService, createServiceDefinition } from '@ultrst-armada/krnl';\nexport const Definition = createServiceDefinition({ id: 'x', name: 'X', version: '1.0.0', operations: { execute: { id: 'x.execute', name: 'execute', handler: async () => ({ value: 1 }) } } });\nexport const Service = createService(Definition);\n' }]);
   assert.equal(result.ok, true);
   assert.equal(result.diagnostics.length, 0);
 });

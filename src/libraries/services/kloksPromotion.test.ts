@@ -45,7 +45,7 @@ test("promotion blocks before mutation when validation fails", async () => {
   invalid.service.name = "";
   let commits = 0;
   const result = await promoteKultServiceToKloks(invalid, {
-    account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
+    id: "test-target", account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
     servicePath: "generated/service", exportPath: "src/index.ts", exportStatement: "export * from './generated/service/index.js';",
     packageJsonPath: "package.json", npmPackageName: "@example/service",
   }, {
@@ -63,7 +63,7 @@ test("promotion supports dry-run without mutation", async () => {
     ["package.json", { content: btoa(JSON.stringify({ version: "1.24.0" })), sha: "pkg" }],
   ]));
   const result = await promoteKultServiceToKloks(STARTER_KLOKS_ARITHMETIC_SERVICE, {
-    account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
+    id: "test-target", account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
     servicePath: "generated/service", exportPath: "src/index.ts", exportStatement: "export * from './generated/service/index.js';",
     packageJsonPath: "package.json", npmPackageName: "@example/service",
   }, fake.client, { engineer: async () => ({ ok: true, commands: [] }), dryRun: true });
@@ -77,7 +77,7 @@ test("promotion reports CI failure without claiming publication", async () => {
   ]));
   fake.client.pollWorkflow = async () => ({ id: 10, status: "completed", conclusion: "failure" });
   const result = await promoteKultServiceToKloks(STARTER_KLOKS_ARITHMETIC_SERVICE, {
-    account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
+    id: "test-target", account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
     servicePath: "generated/service", exportPath: "src/index.ts", exportStatement: "export * from './generated/service/index.js';",
     packageJsonPath: "package.json", npmPackageName: "@example/service",
   }, fake.client, { engineer: async () => ({ ok: true, commands: [] }) });
@@ -90,7 +90,7 @@ test("promotion is idempotent after the first successful promotion", async () =>
     ["package.json", { content: btoa(JSON.stringify({ version: "1.24.0" })), sha: "pkg" }],
   ]));
   const target = {
-    account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
+    id: "test-target", account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
     servicePath: "generated/service", exportPath: "src/index.ts", exportStatement: "export * from './generated/service/index.js';",
     packageJsonPath: "package.json", npmPackageName: "@example/service",
   };
@@ -111,7 +111,7 @@ test("promotion target registry supports multiple targets and compatibility insp
   const { KloksPromotionTargetRegistry } = await import("./kloksPromotion.js");
   const registry = new KloksPromotionTargetRegistry();
   const makeTarget = (id: string) => ({
-    id, account: "primary", repository: "repo-" + id, branch: "main", workflow: "ci.yml",
+    id, id: "test-target", account: "primary", repository: "repo-" + id, branch: "main", workflow: "ci.yml",
     servicePath: "generated/" + id, exportPath: "src/index.ts",
     exportStatement: "export * from './generated/" + id + "/index.js';",
     packageJsonPath: "package.json", npmPackageName: "@example/" + id,

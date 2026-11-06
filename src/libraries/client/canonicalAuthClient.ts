@@ -1,4 +1,11 @@
-import { createLuthAuthClient, DEFAULT_LUTH_URL, resolveClientOrigin } from '@dinilmusick/gutts/auth';
+import { createLuthAuthClient } from '@ultrst-armada/kloks/client';
+
+const DEFAULT_LUTH_URL = 'https://luth.blueprint-ninjastudios.workers.dev';
+function resolveClientOrigin(explicitOrigin?: string): string {
+  if (explicitOrigin?.trim()) return new URL(explicitOrigin).origin;
+  if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin;
+  return '';
+}
 
 export interface CanonicalAuthResult {
   success: boolean;

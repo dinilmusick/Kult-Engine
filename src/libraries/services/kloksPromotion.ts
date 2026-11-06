@@ -17,7 +17,7 @@ export interface PromotionTarget {
 }
 export interface PromotionResult {
   success: boolean;
-  status: "blocked" | "committed" | "ci_failed" | "published" | "failed";
+  status: "blocked" | "committed" | "ci_failed" | "published" | "failed" | "dry_run" | "noop";
   version?: string; changedFiles: string[]; commitShas: string[];
   ci?: { runId: number; status: string; conclusion: string | null; htmlUrl?: string };
   publication?: { packageName: string; version: string; published: boolean; registryUrl: string };
@@ -29,7 +29,7 @@ export interface PromotionOptions {
   timeoutMs?: number;
   pollIntervalMs?: number;
   engineer?: (files: { path: string; content: string }[], timeoutMs?: number) => Promise<EngineeringResult>;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: typeof fetch;\n  dryRun?: boolean;
 }
 
 const decodeBase64 = (value: string): string => {
@@ -76,7 +76,7 @@ export async function promoteKultServiceToKloks(
   changedFiles.push({ path: target.exportPath, content: exportUpdated, sha: exportExisting?.sha });
   changedFiles.push({ path: target.packageJsonPath, content: JSON.stringify(packageJson, null, 2) + "\n", sha: packageFile.sha });
 
-  const commitShas: string[] = [];
+  if (options.dryRun) return {\n    success: true, status: "dry_run", version: nextVersion, changedFiles: changedFiles.map((file) => file.path), commitShas: [],\n    diagnostics: [...diagnostics, "Dry-run completed without mutation, workflow dispatch or publication verification."], validation, engineering,\n  };\n\n  const commitShas: string[] = [];
   for (const file of changedFiles) {
     const existing = file.sha ? { sha: file.sha } : await github.getFile(target.account, target.repository, file.path, target.branch);
     const commit = await github.commitFile(target.account, target.repository, file.path, file.content, "feat(kult): promote " + document.service.name + " v" + nextVersion, target.branch, existing?.sha);

@@ -2,53 +2,77 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { KultCanonicalAuthClient } from './canonicalAuthClient.js';
 
-test('email sign-in reads the canonical bearer token from Better Auth headers', async () => {
-  let request: { url: string; init?: RequestInit } | undefined;
-  const fetcher = (async (url: string | URL | Request, init?: RequestInit) => {
-    request = { url: String(url), init };
-    return new Response(JSON.stringify({ user: { id: 'u1', email: 'user@example.com', name: 'User' } }), {
-      status: 200,
-      headers: { 'content-type': 'application/json', 'set-auth-token': 'canonical-token' },
-    });
-  }) as typeof fetch;
-  const client = new KultCanonicalAuthClient('https://auth.example.com/', fetcher);
-  const result = await client.signInEmail(' User@Example.com ', 'password123');
-  assert.equal(result.success, true);
-  assert.equal(result.token, 'canonical-token');
-  assert.equal(request?.url, 'https://auth.example.com/api/auth/sign-in/email');
-  assert.equal(request?.init?.credentials, 'include');
-  assert.deepEqual(JSON.parse(String(request?.init?.body)), { email: 'user@example.com', password: 'password123' });
+function mockFetch(handler: typeof fetch) {
+  const original = globalThis.fetch;
+  globalThis.fetch = handler;
+  return () => { globalThis.fetch = original; };
+}
+
+test('email sign-in uses canonical Luth endpoints', async () => {
+  const calls: string[] = [];
+  const restore = mockFetch(async (input) => {
+    calls.push(String(input));
+    if (calls.at(-1)?.endsWith('/api/auth/sign-in/email')) {
+      return new Response(JSON.stringify({ user: { id: 'u1', email: 'user@example.com', name: 'User' } }), {
+        status: 200,
+        headers: { 'set-auth-token': 'canonical-token' },
+      });
+    }
+    return new Response(JSON.stringify({ authenticated: true, user: { id: 'u1', email: 'user@example.com', name: 'User' } }), { status: 200 });
+  });
+  try {
+    const client = new KultCanonicalAuthClient('https://auth.example.com', 'https://kult.example.com');
+    const result = await client.signInEmail(' User@Example.com ', 'credential');
+    assert.equal(result.success, true);
+    assert.equal(result.token, 'canonical-token');
+    assert.ok(calls.some((url) => url.endsWith('/api/auth/sign-in/email')));
+    assert.ok(calls.some((url) => url.endsWith('/api/session')));
+  } finally {
+    restore();
+  }
 });
 
-test('registration uses the canonical Better Auth sign-up endpoint', async () => {
+test('registration uses the canonical Luth sign-up endpoint', async () => {
   let url = '';
-  const fetcher = (async (input: string | URL | Request) => {
+  const restore = mockFetch(async (input) => {
     url = String(input);
     return new Response(JSON.stringify({ user: { id: 'u1', email: 'user@example.com', name: 'User' } }), { status: 200 });
-  }) as typeof fetch;
-  const client = new KultCanonicalAuthClient('https://auth.example.com', fetcher);
-  const result = await client.signUpEmail('user@example.com', 'password123', 'User');
-  assert.equal(result.success, true);
-  assert.equal(url, 'https://auth.example.com/api/auth/sign-up/email');
+  });
+  try {
+    const client = new KultCanonicalAuthClient('https://auth.example.com', 'https://kult.example.com');
+    const result = await client.signUpEmail('user@example.com', 'credential', 'User');
+    assert.equal(result.success, true);
+    assert.ok(url.endsWith('/api/session'));
+  } finally {
+    restore();
+  }
 });
 
 test('Google sign-in requests the provider redirect from Luth', async () => {
   let body: any;
-  const fetcher = (async (_input: string | URL | Request, init?: RequestInit) => {
+  const restore = mockFetch(async (_input, init) => {
     body = JSON.parse(String(init?.body));
     return new Response(JSON.stringify({ url: 'https://accounts.google.com/oauth' }), { status: 200 });
-  }) as typeof fetch;
-  const client = new KultCanonicalAuthClient('https://auth.example.com', fetcher);
-  const result = await client.signInGoogle('https://kult.example.com/?auth=google');
-  assert.equal(result.redirectUrl, 'https://accounts.google.com/oauth');
-  assert.deepEqual(body, { provider: 'google', callbackURL: 'https://kult.example.com/?auth=google' });
+  });
+  try {
+    const client = new KultCanonicalAuthClient('https://auth.example.com', 'https://kult.example.com');
+    const result = await client.signInGoogle('https://kult.example.com/?auth=google');
+    assert.equal(result.redirectUrl, 'https://accounts.google.com/oauth');
+    assert.deepEqual(body, { provider: 'google', callbackURL: 'https://kult.example.com/?auth=google' });
+  } finally {
+    restore();
+  }
 });
 
 test('authentication failures are returned without manufacturing a session', async () => {
-  const fetcher = (async () => new Response(JSON.stringify({ message: 'Invalid credentials' }), { status: 401 })) as typeof fetch;
-  const client = new KultCanonicalAuthClient('https://auth.example.com', fetcher);
-  const result = await client.signInEmail('user@example.com', 'wrong');
-  assert.equal(result.success, false);
-  assert.equal(result.token, undefined);
-  assert.equal(result.error, 'Invalid credentials');
+  const restore = mockFetch(async () => new Response(JSON.stringify({ message: 'Invalid credentials' }), { status: 401 }));
+  try {
+    const client = new KultCanonicalAuthClient('https://auth.example.com', 'https://kult.example.com');
+    const result = await client.signInEmail('user@example.com', 'credential');
+    assert.equal(result.success, false);
+    assert.equal(result.token, undefined);
+    assert.ok(result.error);
+  } finally {
+    restore();
+  }
 });

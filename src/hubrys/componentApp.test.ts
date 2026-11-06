@@ -42,7 +42,7 @@ assert.equal(testReport.success, true);
 
 // 7. service.promote
 const promo = await hubrysComponentApp.backend.executeCapability<{ serviceId: string }, any>('service.promote', undefined, { serviceId: created.serviceId });
-assert.equal(promo.success, true);
+assert.equal(promo.success, true, JSON.stringify(promo));
 assert.ok(promo.packageName);
 assert.ok(promo.filesCount > 0);
 

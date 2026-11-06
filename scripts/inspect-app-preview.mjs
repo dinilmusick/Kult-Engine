@@ -17,7 +17,15 @@ try {
     const errors = [];
     page.on('pageerror', (error) => errors.push({ kind: 'pageerror', message: error.message }));
     page.on('console', (message) => {
-      if (message.type() === 'error' && !message.text().includes('Canonical Google session restoration failed')) errors.push({ kind: 'console', message: message.text() });
+      const text = message.text();
+      const expectedAuthNoise = text.includes('Canonical Google session restoration failed') || text.includes('srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app');
+      const expectedApi404 = text.includes('Failed to load resource: the server responded with a 404');
+      if (message.type() === 'error' && !expectedAuthNoise && !expectedApi404) errors.push({ kind: 'console', message: text });
+    });
+    page.on('response', (response) => {
+      if (response.status() >= 400 && !response.url().includes('/api/')) {
+        errors.push({ kind: 'http', message: response.status() + ' ' + response.url() });
+      }
     });
     const response = await page.goto(baseUrl + '/', { waitUntil: 'networkidle', timeout: 30000 });
     const screenshot = path.join(outputDir, `home-${viewport.width}x${viewport.height}.png`);

@@ -10,5 +10,5 @@ export interface NodeRuntimeAdapter<TEnv = unknown> {
 export const createNodeRuntimeAdapter = <TEnv>(handler: PortableServiceHandler<TEnv>): NodeRuntimeAdapter<TEnv> => ({
   runtime: "node",
   invoke: async (request, env) => handler(request, env),
-  handleNodeRequest: (request, response, env) => adaptNodeRequest(request, response, (webRequest) => handler(webRequest, env), env),
+  handleNodeRequest: (request, response, env) => adaptNodeRequest(request, response, async (webRequest) => handler(webRequest, env), env),
 });

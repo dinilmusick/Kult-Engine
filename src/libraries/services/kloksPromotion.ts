@@ -11,6 +11,7 @@ export interface PromotionGitHubClient {
   pollWorkflow: (account: string, repository: string, workflow: string, ref: string, startedAfter: string, options?: { timeoutMs?: number; intervalMs?: number }) => Promise<{ id: number; status: string; conclusion: string | null; html_url?: string }>;
 }
 export interface PromotionTarget {
+  id: string;
   account: string; repository: string; branch: string; workflow: string;
   servicePath: string; exportPath: string; exportStatement: string;
   packageJsonPath: string; npmPackageName: string; npmRegistryUrl?: string;

@@ -27,6 +27,7 @@ export interface EngineeringResult {
 }
 
 const COMMANDS: Record<string, [string, string[]]> = {
+  lint: ['pnpm', ['run', 'lint']],
   typecheck: ['pnpm', ['exec', 'tsc', '--noEmit']],
   test: ['pnpm', ['test', '--', '--run']],
 };

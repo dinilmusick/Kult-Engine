@@ -5,19 +5,17 @@ import { promoteKultServiceToKloks, type PromotionGitHubClient } from "./kloksPr
 
 const makeGitHub = (files: Map<string, { content: string; sha: string }>) => {
   const commits: Array<{ path: string; content: string }> = [];
-  return {
-    commits,
-    client: {
-      getFile: async (_account: string, _repo: string, path: string) => files.get(path) || null,
-      commitFile: async (_account: string, _repo: string, path: string, content: string) => {
-        commits.push({ path, content });
-        files.set(path, { content: btoa(content), sha: "sha-" + commits.length });
-        return { commitSha: "commit-" + commits.length };
-      },
-      dispatchWorkflow: async () => {},
-      pollWorkflow: async () => ({ id: 9, status: "completed", conclusion: "success" as const }),
+  const client: PromotionGitHubClient = {
+    getFile: async (_account, _repo, path) => files.get(path) || null,
+    commitFile: async (_account, _repo, path, content) => {
+      commits.push({ path, content });
+      files.set(path, { content: btoa(content), sha: "sha-" + commits.length });
+      return { commitSha: "commit-" + commits.length };
     },
+    dispatchWorkflow: async () => {},
+    pollWorkflow: async () => ({ id: 9, status: "completed", conclusion: "success" }),
   };
+  return { commits, client };
 };
 
 test("promotion validates, inserts files, updates exports and bumps version", async () => {

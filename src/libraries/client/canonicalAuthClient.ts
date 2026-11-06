@@ -1,4 +1,4 @@
-import { createCanonicalAuthClient, DEFAULT_LUTH_URL, resolveClientOrigin } from '@ultrst-armada/kloks/auth';
+import { createCanonicalAuthClient, DEFAULT_LUTH_URL, resolveClientOrigin } from '@ultrst-armada/kloks/client';
 
 export interface CanonicalAuthResult {
   success: boolean;

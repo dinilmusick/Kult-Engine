@@ -8,6 +8,7 @@ export interface KultValidationResult {
   code: {
     ok: boolean;
     diagnostics: QualityDiagnostic[];
+    failedLayers: string[];
     metrics: { files: number; maxLines: number };
   };
   ok: boolean;
@@ -16,9 +17,10 @@ export interface KultValidationResult {
 export async function validateKultService(document: ServiceDocument): Promise<KultValidationResult> {
   const semantic = validateServiceDocument(document);
   if (!semantic.isValid) {
-    return { semantic, code: { ok: false, diagnostics: [], metrics: { files: 0, maxLines: 0 } }, ok: false };
+    return { semantic, code: { ok: false, diagnostics: [], failedLayers: [], metrics: { files: 0, maxLines: 0 } }, ok: false };
   }
   const artifact = generateKloksArtifact(document);
-  const code = validateGeneratedService(artifact.files.map((file) => ({ path: file.path, content: file.content })));
-  return { semantic, code, ok: semantic.isValid && code.ok };
+  const quality = validateGeneratedService(artifact.files.map((file) => ({ path: file.path, content: file.content })));
+  const failedLayers = [...new Set(quality.diagnostics.map((diagnostic) => diagnostic.code))];
+  return { semantic, code: { ...quality, failedLayers }, ok: semantic.isValid && quality.ok };
 }

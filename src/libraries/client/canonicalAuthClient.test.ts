@@ -42,7 +42,7 @@ test('registration uses the canonical Luth sign-up endpoint', async () => {
     const client = new KultCanonicalAuthClient('https://auth.example.com', 'https://kult.example.com');
     const result = await client.signUpEmail('user@example.com', 'credential', 'User');
     assert.equal(result.success, true);
-    assert.ok(url.endsWith('/api/session'));
+    assert.ok(url.endsWith('/api/auth/sign-up/email'));
   } finally {
     restore();
   }

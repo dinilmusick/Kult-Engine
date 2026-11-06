@@ -1,4 +1,4 @@
-import { createCanonicalAuthClient, DEFAULT_LUTH_URL, resolveClientOrigin } from '@ultrst-armada/kloks/auth';
+const DEFAULT_LUTH_URL = 'https://luth.blueprint-ninjastudios.workers.dev';
 
 export interface CanonicalAuthResult {
   success: boolean;
@@ -9,30 +9,37 @@ export interface CanonicalAuthResult {
 }
 
 export class KultCanonicalAuthClient {
-  private readonly client: ReturnType<typeof createCanonicalAuthClient>;
+  private token = '';
 
-  constructor(baseUrl = DEFAULT_LUTH_URL, applicationOrigin?: string) {
-    const tokenStore = (() => {
-      let token = '';
-      return { get: () => token, set: (value: string) => { token = value; }, clear: () => { token = ''; } };
-    })();
-    this.client = createCanonicalAuthClient({
-      ecosystemId: 'ultrst-armada',
-      applicationId: 'kult',
-      origin: resolveClientOrigin(applicationOrigin),
-      luthUrl: baseUrl,
-      autoRegister: false,
-      tokenStore,
+  constructor(private readonly baseUrl = DEFAULT_LUTH_URL, private readonly applicationOrigin = '') {}
+
+  private async request(path: string, init: RequestInit = {}): Promise<Response> {
+    return fetch(this.baseUrl.replace(/\/+$/, '') + path, {
+      ...init,
+      credentials: init.credentials || 'include',
+      headers: { 'Content-Type': 'application/json', ...(this.token ? { Authorization: 'Bearer ' + this.token } : {}), ...(init.headers || {}) },
     });
+  }
+
+  private async parse(response: Response): Promise<any> {
+    const data = await response.json().catch(() => ({}));
+    const token = response.headers.get('set-auth-token') || data?.token || data?.session?.token || '';
+    if (token) this.token = token;
+    return data;
   }
 
   async signInEmail(email: string, password: string): Promise<CanonicalAuthResult> {
     try {
-      await this.client.signInWithEmail({ email: email.trim().toLowerCase(), password });
-      const session = await this.client.getSession();
-      if (!session.authenticated || !session.user) return { success: false, error: 'Luth did not establish a session.' };
-      const token = new Headers(this.client.getAuthHeaders()).get('authorization')?.replace(/^Bearer\s+/i, '');
-      return { success: true, user: session.user, token: token || undefined };
+      const response = await this.request('/api/auth/sign-in/email', {
+        method: 'POST',
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
+      const data = await this.parse(response);
+      if (!response.ok) return { success: false, error: data?.message || 'Canonical Luth authentication failed.' };
+      const session = await this.request('/api/session');
+      const sessionData = await this.parse(session);
+      if (!sessionData.authenticated || !sessionData.user) return { success: false, error: 'Luth did not establish a session.' };
+      return { success: true, user: sessionData.user, token: this.token || undefined };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Canonical Luth authentication failed.' };
     }
@@ -40,19 +47,29 @@ export class KultCanonicalAuthClient {
 
   async signUpEmail(email: string, password: string, name: string): Promise<CanonicalAuthResult> {
     try {
-      await this.client.signUpWithEmail({ email: email.trim().toLowerCase(), password, name: name.trim() });
-      const session = await this.client.getSession();
-      return session.authenticated && session.user ? { success: true, user: session.user } : { success: false, error: 'Luth did not establish a session.' };
+      const response = await this.request('/api/auth/sign-up/email', {
+        method: 'POST',
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password, name: name.trim() }),
+      });
+      if (!response.ok) {
+        const data = await this.parse(response);
+        return { success: false, error: data?.message || 'Canonical Luth registration failed.' };
+      }
+      const data = await this.parse(response);
+      return data?.user ? { success: true, user: data.user } : { success: false, error: 'Luth did not establish a session.' };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Canonical Luth registration failed.' };
     }
   }
 
-  async signInGoogle(callbackURL: string): Promise<CanonicalAuthResult> {
+  async signInGoogle(callbackURL = this.applicationOrigin): Promise<CanonicalAuthResult> {
     try {
-      const result = await this.client.signInWithGoogle({ callbackURL });
-      const data = result as { url?: string };
-      return { success: true, redirectUrl: data.url };
+      const response = await this.request('/api/auth/sign-in/social', {
+        method: 'POST',
+        body: JSON.stringify({ provider: 'google', callbackURL }),
+      });
+      const data = await this.parse(response);
+      return response.ok ? { success: true, redirectUrl: data?.url } : { success: false, error: data?.message || 'Canonical Luth Google authentication failed.' };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Canonical Luth Google authentication failed.' };
     }

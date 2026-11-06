@@ -6,6 +6,7 @@
 
 import type { ServiceDocument } from '../types/serviceIR';
 import { compileServicePipelineCode } from './serviceCodeCompiler';
+import { GENERATED_LINT_SCRIPT, generatedTsConfig, stableServiceFingerprint } from './kloksArtifactSupport';
 
 export interface KloksGeneratedArtifact {
   packageName: string;
@@ -45,8 +46,13 @@ export function generateKloksArtifact(doc: ServiceDocument): KloksGeneratedArtif
         },
       },
       dependencies: {
-        '@ultrst-armada/krnl': '^1.0.2',
-        '@ultrst-armada/kloks': '^1.5.2',
+        '@ultrst-armada/krnl': '^1.0.9',
+        '@ultrst-armada/kloks': '^1.24.0',
+      },
+      scripts: {
+        lint: 'node scripts/lint.mjs',
+        typecheck: 'tsc --noEmit',
+        test: 'vitest run',
       },
       devDependencies: {
         typescript: '^5.7.3',
@@ -68,7 +74,7 @@ export function generateKloksArtifact(doc: ServiceDocument): KloksGeneratedArtif
       authority: 'KULT_ENGINE',
       runtime: 'krnlts',
       entrypoint: './dist/index.js',
-      contractFingerprint: `kloks_sig_${Date.now().toString(36)}`,
+      contractFingerprint: `kloks_sig_${stableServiceFingerprint(doc)}`,
       inputs: doc.service.inputPorts,
       outputs: doc.service.outputPorts,
       nodeCount: doc.nodes.length,
@@ -112,11 +118,12 @@ export default ${serviceClassName}Service;
 `;
 
   // 4. tests/service.test.ts
+  const smokeInput = Object.fromEntries(doc.service.inputPorts.map((port) => [port.name, port.defaultValue ?? null]));
   const testCasesCode = doc.tests
     .map(
       (t) => `  it('${t.name}', async () => {
     await ${serviceClassName}Service.start();
-    const res = await ${serviceClassName}Service.call('execute', ${JSON.stringify(t.input)});
+    const res: any = await ${serviceClassName}Service.call('execute', ${JSON.stringify(t.input)});
     expect(res).toBeDefined();
 ${t.assertions
   .map(
@@ -127,14 +134,9 @@ ${t.assertions
   });`
     )
     .join('\n\n');
+  const smokeTest = `  it('executes the generated service smoke path', async () => {\n    await ${serviceClassName}Service.start();\n    const res: any = await ${serviceClassName}Service.call('execute', ${JSON.stringify(smokeInput)});\n    expect(res).toBeDefined();\n  });`;
 
-  const testsTs = `import { describe, it, expect } from 'vitest';
-import { ${serviceClassName}Service } from '../src/index';
-
-describe('${doc.service.name} Authoritative Test Suite', () => {
-${testCasesCode || `  it('should initialize and execute without errors', async () => {\n    expect(${serviceClassName}Service).toBeDefined();\n  });`}
-});
-`;
+  const testsTs = `import { describe, it, expect } from 'vitest';\nimport { ${serviceClassName}Service } from '../src/index.js';\n\ndescribe('${doc.service.name} Authoritative Test Suite', () => {\n${testCasesCode ? testCasesCode + '\n\n' : ''}${smokeTest}\n});\n`;
 
   // 5. dist/index.d.ts
   const typesDts = `import { IService, ServiceDefinition } from '@ultrst-armada/krnl';
@@ -151,6 +153,16 @@ export default ${serviceClassName}Service;
       { path: 'src/index.ts', content: sourceTs, type: 'source' },
       { path: 'tests/service.test.ts', content: testsTs, type: 'test' },
       { path: 'dist/index.d.ts', content: typesDts, type: 'types' },
+      {
+        path: 'scripts/lint.mjs',
+        content: GENERATED_LINT_SCRIPT,
+        type: 'config',
+      },
+      {
+        path: 'tsconfig.json',
+        content: generatedTsConfig(),
+        type: 'config',
+      },
     ],
     manifest: JSON.parse(manifestJson),
     changeSummary: `Promoting ${doc.service.name} v${doc.service.version} (${doc.nodes.length} nodes, ${doc.edges.length} wires, ${doc.tests.length} tests) to KLOKS.`,

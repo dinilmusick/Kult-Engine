@@ -1,6 +1,8 @@
 import { executeServiceGraph } from '../../libraries/services/graphExecutor.js';
 import { validateServiceDocument } from '../../libraries/services/graphValidator.js';
 import { generateKloksArtifact } from '../../libraries/services/kloksExporter.js';
+import { validateKultService } from '../../libraries/services/codeValidation.js';
+import { runArtifactEngineering } from '../../libraries/services/serviceEngineeringRuntime.js';
 import { runAllKultEngineContractTests } from '../../libraries/services/kultEngineSuite.js';
 import { STARTER_KLOKS_ARITHMETIC_SERVICE } from '../../libraries/services/starterServices.js';
 import type { ServiceDocument } from '../../libraries/types/serviceIR.js';
@@ -72,16 +74,41 @@ export const kultServiceAuthoring = {
 
   validate: async (input: { serviceId?: string; document?: ServiceDocument } = {}) => {
     const doc = input.document || (input.serviceId ? serviceStore.get(input.serviceId) : undefined) || STARTER_KLOKS_ARITHMETIC_SERVICE;
-    return validateServiceDocument(doc);
+    return await validateKultService(doc);
+  },
+
+  engineer: async (input: {
+    serviceId?: string;
+    document?: ServiceDocument;
+    mode?: 'validate' | 'run' | 'test' | 'debug' | 'artifact' | 'verify';
+    inputs?: Record<string, unknown>;
+    timeoutMs?: number;
+  } = {}) => {
+    const doc = input.document || (input.serviceId ? serviceStore.get(input.serviceId) : undefined) || STARTER_KLOKS_ARITHMETIC_SERVICE;
+    const validation = await validateKultService(doc);
+    const execution = input.mode === 'run' || input.mode === 'debug'
+      ? await executeServiceGraph(doc, input.inputs || {})
+      : undefined;
+    if (!validation.ok) return { success: false, validation, execution };
+    if (input.mode === 'validate' || input.mode === 'run' || input.mode === 'debug') {
+      return { success: Boolean(execution ? execution.status === 'passed' : validation.ok), validation, execution };
+    }
+    const artifact = generateKloksArtifact(doc);
+    if (input.mode === 'artifact') return { success: true, validation, artifact };
+    const engineering = await runArtifactEngineering(
+      artifact.files.map((file) => ({ path: file.path, content: file.content })),
+      input.timeoutMs,
+    );
+    return { success: engineering.ok, validation, artifact, engineering };
   },
 
   promote: async (input: { serviceId?: string; document?: ServiceDocument } = {}) => {
     const doc = input.document || (input.serviceId ? serviceStore.get(input.serviceId) : undefined) || STARTER_KLOKS_ARITHMETIC_SERVICE;
-    const validation = validateServiceDocument(doc);
-    if (!validation.isValid) {
-      return { success: false, error: `Promotion rejected: ${validation.errorCount} blocking errors`, errors: validation.errors };
+    const engineering = await kultServiceAuthoring.engineer({ document: doc, mode: 'verify' });
+    if (!engineering.success) {
+      return { success: false, error: 'Promotion blocked by service engineering verification.', engineering };
     }
-    const artifact = generateKloksArtifact(doc);
+    const artifact = engineering.artifact;
     return {
       success: true,
       serviceId: doc.service.id,
@@ -90,6 +117,7 @@ export const kultServiceAuthoring = {
       manifest: artifact.manifest,
       contractDiff: artifact.contractDiff,
       filesCount: artifact.files.length,
+      engineering,
     };
   },
 };

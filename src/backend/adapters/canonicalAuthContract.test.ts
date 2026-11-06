@@ -5,16 +5,16 @@ import test from 'node:test';
 
 const root = process.cwd();
 const adapter = fs.readFileSync(path.join(root, 'src/backend/adapters/httpsAdapter.ts'), 'utf8');
+const identity = fs.readFileSync(path.join(root, 'src/backend/adapters/canonicalIdentity.ts'), 'utf8');
 const workspaceService = fs.readFileSync(path.join(root, 'src/backend/services/kultWorkspaceService.ts'), 'utf8');
 const apiClient = fs.readFileSync(path.join(root, 'src/libraries/client/apiClient.ts'), 'utf8');
 const backendFacade = fs.readFileSync(path.join(root, 'src/backend/DepmBackend.ts'), 'utf8');
 
 test('Kult resolves identity only by validating a canonical Luth bearer session', () => {
-  assert.match(adapter, /api\/session/);
-  assert.ok(adapter.includes('Authorization: `Bearer ${token}`'));
-  assert.match(adapter, /session\.user\?\.id/);
-  assert.match(adapter, /token\.startsWith\(['"]sess::['"]\)/);
-  assert.doesNotMatch(adapter, /Bearer\\s+sess::/);
+  assert.match(identity, /api\/session/);
+  assert.match(identity, /Authorization: 'Bearer ' \+ token/);
+  assert.match(identity, /session\.user\?\.id/);
+  assert.match(adapter, /resolveCanonicalUserId/);
   assert.doesNotMatch(adapter, /req\.headers\.get\(['"]x-user-id['"]\)/i);
   assert.doesNotMatch(adapter, /searchParams\.get\(['"]userId['"]\)/i);
 });

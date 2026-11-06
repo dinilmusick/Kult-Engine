@@ -7,7 +7,14 @@
 import type { ServiceDocument } from '../types/serviceIR';
 import { compileServicePipelineCode } from './serviceCodeCompiler';
 
-function stableFingerprint(doc: ServiceDocument): string {\n  const source = JSON.stringify({ id: doc.service.id, version: doc.service.version, inputs: doc.service.inputPorts, outputs: doc.service.outputPorts, assets: doc.assets });\n  let hash = 2166136261;\n  for (let i = 0; i < source.length; i += 1) hash = Math.imul(hash ^ source.charCodeAt(i), 16777619);\n  return (hash >>> 0).toString(16);\n}\n\nexport interface KloksGeneratedArtifact {
+function stableFingerprint(doc: ServiceDocument): string {
+  const source = JSON.stringify({ id: doc.service.id, version: doc.service.version, inputs: doc.service.inputPorts, outputs: doc.service.outputPorts, assets: doc.assets });
+  let hash = 2166136261;
+  for (let i = 0; i < source.length; i += 1) hash = Math.imul(hash ^ source.charCodeAt(i), 16777619);
+  return (hash >>> 0).toString(16);
+}
+
+export interface KloksGeneratedArtifact {
   packageName: string;
   files: {
     path: string;

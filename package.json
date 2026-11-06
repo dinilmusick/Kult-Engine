@@ -21,7 +21,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@tailwindcss/vite": "^4.1.14",
     "@ultrst-armada/floks": "^1.13.4",
-    "@ultrst-armada/kloks": "^1.25.0",
+    "@ultrst-armada/kloks": "^1.24.0",
     "@ultrst-armada/krnl": "^1.0.9",
     "@vitejs/plugin-react": "^5.0.4",
     "@xyflow/react": "^12.11.1",
@@ -36,7 +36,7 @@
     "zod": "^3.23.8",
     "zustand": "^5.0.15",
     "@ultrst-armada/frnlts": "^0.5.3",
-    "@dinilmusick/gutts": "^1.4.4"
+    "@dinilmusick/gutts": "^1.3.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",

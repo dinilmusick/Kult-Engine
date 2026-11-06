@@ -48,6 +48,10 @@ export function generateKloksArtifact(doc: ServiceDocument): KloksGeneratedArtif
         '@ultrst-armada/krnl': '^1.0.2',
         '@ultrst-armada/kloks': '^1.5.2',
       },
+      scripts: {
+        typecheck: 'tsc --noEmit',
+        test: 'vitest run',
+      },
       devDependencies: {
         typescript: '^5.7.3',
         vitest: '^3.1.0',
@@ -151,6 +155,22 @@ export default ${serviceClassName}Service;
       { path: 'src/index.ts', content: sourceTs, type: 'source' },
       { path: 'tests/service.test.ts', content: testsTs, type: 'test' },
       { path: 'dist/index.d.ts', content: typesDts, type: 'types' },
+      {
+        path: 'tsconfig.json',
+        content: JSON.stringify({
+          compilerOptions: {
+            target: 'ES2022',
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            strict: true,
+            esModuleInterop: true,
+            skipLibCheck: true,
+            noEmit: true,
+          },
+          include: ['src/**/*.ts', 'tests/**/*.ts'],
+        }, null, 2),
+        type: 'config',
+      },
     ],
     manifest: JSON.parse(manifestJson),
     changeSummary: `Promoting ${doc.service.name} v${doc.service.version} (${doc.nodes.length} nodes, ${doc.edges.length} wires, ${doc.tests.length} tests) to KLOKS.`,

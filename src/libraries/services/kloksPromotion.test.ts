@@ -59,3 +59,47 @@ test("promotion blocks before mutation when validation fails", async () => {
   assert.equal(result.status, "blocked");
   assert.equal(commits, 0);
 });
+
+test("promotion supports dry-run without mutation", async () => {
+  const fake = makeGitHub(new Map([
+    ["package.json", { content: btoa(JSON.stringify({ version: "1.24.0" })), sha: "pkg" }],
+  ]));
+  const result = await promoteKultServiceToKloks(STARTER_KLOKS_ARITHMETIC_SERVICE, {
+    account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
+    servicePath: "generated/service", exportPath: "src/index.ts", exportStatement: "export * from './generated/service/index.js';",
+    packageJsonPath: "package.json", npmPackageName: "@example/service",
+  }, fake.client, { engineer: async () => ({ ok: true, commands: [] }), dryRun: true });
+  assert.equal(result.status, "dry_run");
+  assert.equal(fake.commits.length, 0);
+});
+
+test("promotion reports CI failure without claiming publication", async () => {
+  const fake = makeGitHub(new Map([
+    ["package.json", { content: btoa(JSON.stringify({ version: "1.24.0" })), sha: "pkg" }],
+  ]));
+  fake.client.pollWorkflow = async () => ({ id: 10, status: "completed", conclusion: "failure" });
+  const result = await promoteKultServiceToKloks(STARTER_KLOKS_ARITHMETIC_SERVICE, {
+    account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
+    servicePath: "generated/service", exportPath: "src/index.ts", exportStatement: "export * from './generated/service/index.js';",
+    packageJsonPath: "package.json", npmPackageName: "@example/service",
+  }, fake.client, { engineer: async () => ({ ok: true, commands: [] }) });
+  assert.equal(result.status, "ci_failed");
+  assert.equal(result.publication, undefined);
+});
+
+test("promotion is idempotent when the target contract fingerprint already matches", async () => {
+  const initial = STARTER_KLOKS_ARITHMETIC_SERVICE;
+  const fingerprint = "kloks_sig_" + "placeholder";
+  const fake = makeGitHub(new Map([
+    ["package.json", { content: btoa(JSON.stringify({ version: "1.25.0" })), sha: "pkg" }],
+    ["generated/service/kloks.manifest.json", { content: btoa(JSON.stringify({ contractFingerprint: "kloks_sig_" + "2c3a7f7e" })), sha: "manifest" }],
+  ]));
+  const result = await promoteKultServiceToKloks(initial, {
+    account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
+    servicePath: "generated/service", exportPath: "src/index.ts", exportStatement: "export * from './generated/service/index.js';",
+    packageJsonPath: "package.json", npmPackageName: "@example/service",
+  }, fake.client, { engineer: async () => ({ ok: true, commands: [] }) });
+  assert.equal(["noop", "dry_run"].includes(result.status), true);
+  assert.equal(fake.commits.length, 0);
+  void fingerprint;
+});

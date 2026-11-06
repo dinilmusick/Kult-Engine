@@ -1,4 +1,4 @@
-import { createLuthAuthClient } from '@ultrst-armada/kloks/client';
+import { LuthAuthClient } from '@ultrst-armada/kloks/client';
 
 const DEFAULT_LUTH_URL = 'https://luth.blueprint-ninjastudios.workers.dev';
 function resolveClientOrigin(explicitOrigin?: string): string {
@@ -16,14 +16,14 @@ export interface CanonicalAuthResult {
 }
 
 export class KultCanonicalAuthClient {
-  private readonly client: ReturnType<typeof createLuthAuthClient>;
+  private readonly client: LuthAuthClient;
 
   constructor(baseUrl = DEFAULT_LUTH_URL, applicationOrigin?: string) {
     const tokenStore = (() => {
       let token = '';
       return { get: () => token, set: (value: string) => { token = value; }, clear: () => { token = ''; } };
     })();
-    this.client = createLuthAuthClient({
+    this.client = new LuthAuthClient({
       ecosystemId: 'ultrst-armada',
       applicationId: 'kult',
       origin: resolveClientOrigin(applicationOrigin),

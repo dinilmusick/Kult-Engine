@@ -1,4 +1,4 @@
-import { createCanonicalAuthClient, DEFAULT_LUTH_URL, resolveClientOrigin } from '@ultrst-armada/kloks/client';
+import { createLuthAuthClient, DEFAULT_LUTH_URL, resolveClientOrigin } from '@dinilmusick/gutts/auth';
 
 export interface CanonicalAuthResult {
   success: boolean;
@@ -9,14 +9,14 @@ export interface CanonicalAuthResult {
 }
 
 export class KultCanonicalAuthClient {
-  private readonly client: ReturnType<typeof createCanonicalAuthClient>;
+  private readonly client: ReturnType<typeof createLuthAuthClient>;
 
   constructor(baseUrl = DEFAULT_LUTH_URL, applicationOrigin?: string) {
     const tokenStore = (() => {
       let token = '';
       return { get: () => token, set: (value: string) => { token = value; }, clear: () => { token = ''; } };
     })();
-    this.client = createCanonicalAuthClient({
+    this.client = createLuthAuthClient({
       ecosystemId: 'ultrst-armada',
       applicationId: 'kult',
       origin: resolveClientOrigin(applicationOrigin),

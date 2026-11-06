@@ -25,6 +25,51 @@ export interface PromotionResult {
   validation?: Awaited<ReturnType<typeof validateKultService>>;
   engineering?: EngineeringResult;
 }
+export interface PromotionTargetCompatibility {
+  targetId: string;
+  compatible: boolean;
+  checks: Record<string, boolean>;
+  reasons: string[];
+}
+
+export class KloksPromotionTargetRegistry {
+  private readonly targets = new Map<string, PromotionTarget>();
+
+  register(target: PromotionTarget): void {
+    this.targets.set(target.id, target);
+  }
+
+  unregister(targetId: string): void {
+    this.targets.delete(targetId);
+  }
+
+  list(): PromotionTarget[] {
+    return [...this.targets.values()];
+  }
+
+  get(targetId: string): PromotionTarget | undefined {
+    return this.targets.get(targetId);
+  }
+
+  async inspectCompatibility(targetId: string, github: PromotionGitHubClient): Promise<PromotionTargetCompatibility> {
+    const target = this.targets.get(targetId);
+    if (!target) return { targetId, compatible: false, checks: {}, reasons: ["Unknown promotion target."] };
+    const [packageFile, exportFile, workflowFile] = await Promise.all([
+      github.getFile(target.account, target.repository, target.packageJsonPath, target.branch),
+      github.getFile(target.account, target.repository, target.exportPath, target.branch),
+      github.getFile(target.account, target.repository, ".github/workflows/" + target.workflow, target.branch),
+    ]);
+    const checks = {
+      packageJson: Boolean(packageFile),
+      exportPath: Boolean(exportFile),
+      workflow: Boolean(workflowFile),
+      targetConfig: Boolean(target.servicePath && target.npmPackageName && target.exportStatement),
+    };
+    const reasons = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name + " check failed.");
+    return { targetId, compatible: reasons.length === 0, checks, reasons };
+  }
+}
+
 export interface PromotionOptions {
   timeoutMs?: number;
   pollIntervalMs?: number;

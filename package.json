@@ -13,7 +13,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "npm run validate:frontend && node --import tsx --test src/backend/services/kultWorkspaceService.test.ts src/backend/services/kultServiceAuthoring.test.ts src/backend/adapters/canonicalAuthContract.test.ts src/libraries/client/canonicalAuthClient.test.ts src/frontend/components/workspaces/workspaceMenuModel.test.ts src/frontend/components/services/serviceEditorModel.test.ts src/frontend/components/services/functionalityEditorModel.test.ts src/libraries/services/assetDiscovery.test.ts src/libraries/services/developmentRuntime.test.ts src/libraries/services/skipoAgent.test.ts src/libraries/services/codeValidation.test.ts src/hubrys/componentApp.test.ts && node --import tsx --test src/backend/agent/applicationAgent.test.ts",
+    "test": "npm run validate:frontend && node --import tsx --test src/backend/services/kultWorkspaceService.test.ts src/backend/services/kultServiceAuthoring.test.ts src/backend/adapters/canonicalAuthContract.test.ts src/libraries/services/kloksPromotion.test.ts src/libraries/client/canonicalAuthClient.test.ts src/frontend/components/workspaces/workspaceMenuModel.test.ts src/frontend/components/services/serviceEditorModel.test.ts src/frontend/components/services/functionalityEditorModel.test.ts src/libraries/services/assetDiscovery.test.ts src/libraries/services/developmentRuntime.test.ts src/libraries/services/skipoAgent.test.ts src/libraries/services/codeValidation.test.ts src/hubrys/componentApp.test.ts && node --import tsx --test src/backend/agent/applicationAgent.test.ts",
     "validate:frontend": "node scripts/validate-skipo-frontend-structure.mjs"
   },
   "dependencies": {

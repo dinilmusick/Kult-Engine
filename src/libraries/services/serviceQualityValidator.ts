@@ -8,7 +8,7 @@ export interface ServiceQualityReport {
   metrics: { files: number; maxLines: number };
 }
 
-const forbiddenImports = /(?:from\s+|import\s*\(\s*)["'](?:\.\.\/){2,}|["'](?:\.\/)?Skipo\//;
+const forbiddenImports = /(?:from\s+|import\s*\(\s*)["'](?:\.\.\/){2,}|["'](?:@\/)?Skipo\//;
 const stubPattern = /\b(?:TODO|FIXME)\b|throw new Error\(["']Not implemented|return\s+(?:null|undefined)\s*;/;
 
 function lineOf(text: string, offset: number): number {
@@ -41,12 +41,12 @@ export function validateGeneratedService(files: GeneratedServiceFile[]): Service
       });
     }
 
-    if (file.path === 'src/index.ts' && !/createServiceDefinition\\s*\\(/.test(file.content)) diagnostics.push({
+    if (file.path === 'src/index.ts' && !/createServiceDefinition\s*\(/.test(file.content)) diagnostics.push({
       path: file.path,
       code: 'KRNL_SERVICE_DEFINITION',
       message: 'Generated service entrypoint must use the KRNLTS service-definition API.',
     });
-    if (file.path === 'src/index.ts' && !/createService\\s*\\(/.test(file.content)) diagnostics.push({
+    if (file.path === 'src/index.ts' && !/createService\s*\(/.test(file.content)) diagnostics.push({
       path: file.path,
       code: 'KRNL_SERVICE_RUNTIME',
       message: 'Generated service entrypoint must instantiate through KRNLTS createService.',

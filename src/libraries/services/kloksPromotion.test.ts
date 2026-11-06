@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+// Promotion target registry contract is verified in CI.
 import { STARTER_KLOKS_ARITHMETIC_SERVICE } from "./starterServices.js";
 import { promoteKultServiceToKloks, type PromotionGitHubClient } from "./kloksPromotion.js";
 

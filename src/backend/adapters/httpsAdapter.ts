@@ -9,7 +9,7 @@ import { handleAgentRoutes } from '../agent/runtime';
 import { adaptNodeRequest } from './nodeBridge';
 import { handleVaultRoutes } from './vaultRoutes';
 import { createLocalServiceFromKloksAsset, getKloksServiceAsset } from '../../libraries/services/assetDiscovery';
-import { resolveUserFromToken } from '@ultrst-armada/kloks/backend';
+import { resolveCanonicalUserId } from './canonicalIdentity';
 
 export interface Env {
   ENVIRONMENT?: string;
@@ -36,10 +36,7 @@ async function parseBody(req: Request): Promise<any> {
 }
 
 async function getUserId(req: Request, _url: URL, _env: Env): Promise<string> {
-  const authorization = req.headers.get('authorization') || '';
-  if (!authorization) return '';
-  const principal = await resolveUserFromToken(authorization, async () => ({ rows: [] }));
-  return principal?.id || '';
+  return resolveCanonicalUserId(req);
 }
 
 export async function fetchHandler(request: Request, env: Env = {}): Promise<Response> {

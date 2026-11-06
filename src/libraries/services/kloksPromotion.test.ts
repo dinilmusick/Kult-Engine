@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-// Promotion target registry contract is verified in CI.
+// Promotion target registry contract is verified in CI.\n// Re-run verification on the current branch head.
 import { STARTER_KLOKS_ARITHMETIC_SERVICE } from "./starterServices.js";
 import { promoteKultServiceToKloks, type PromotionGitHubClient } from "./kloksPromotion.js";
 

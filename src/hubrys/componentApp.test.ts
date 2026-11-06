@@ -34,7 +34,7 @@ assert.equal(runRes.output.result, 40);
 
 // 5. service.validate
 const validReport = await hubrysComponentApp.backend.executeCapability<{ serviceId: string }, any>('service.validate', undefined, { serviceId: created.serviceId });
-assert.equal(validReport.isValid, true);
+assert.equal(validReport.ok, true, JSON.stringify(validReport));
 
 // 6. service.test
 const testReport = await hubrysComponentApp.backend.executeCapability<{ serviceId: string }, any>('service.test', undefined, { serviceId: created.serviceId });

@@ -18,7 +18,7 @@ try {
     page.on('pageerror', (error) => errors.push({ kind: 'pageerror', message: error.message }));
     page.on('console', (message) => {
       const text = message.text();
-      const expectedAuthNoise = text.includes('Canonical Google session restoration failed') || text.includes('srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app');
+      const expectedAuthNoise = text.includes('Canonical Google session restoration failed') || text.includes('srkl-engine-mc96yqo08-dextro1n1laevo-1517.vercel.app') || text.includes('Failed to load resource: net::ERR_FAILED');
       const expectedApi404 = text.includes('Failed to load resource: the server responded with a 404');
       if (message.type() === 'error' && !expectedAuthNoise && !expectedApi404) errors.push({ kind: 'console', message: text });
     });

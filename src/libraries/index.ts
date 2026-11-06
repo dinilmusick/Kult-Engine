@@ -13,6 +13,8 @@ export * from './services/graphExecutor';
 export * from './services/graphValidator';
 export * from './services/kloksExporter';
 export * from './services/kloksImporter';
+export * from './services/kloksPromotionRegistry';
+export * from './services/kloksPromotion';
 export * from './services/roundTripTester';
 export * from './services/kultEngineSuite';
 export type { UserRole } from './types/auth';

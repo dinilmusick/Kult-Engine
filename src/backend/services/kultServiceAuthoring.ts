@@ -96,7 +96,7 @@ export const kultServiceAuthoring = {
     };
   },
 
-  run: async (input: { serviceId?: string; document?: ServiceDocument; inputs?: Record<string, unknown> } = {}) => {
+  test: async (input: { serviceId?: string; document?: ServiceDocument; inputs?: Record<string, unknown> } = {}) => {
     if (input.document || input.serviceId) {
       const doc = input.document || (input.serviceId ? serviceStore.get(input.serviceId) : undefined) || STARTER_KLOKS_ARITHMETIC_SERVICE;
       const validation = validateServiceDocument(doc);

@@ -213,7 +213,7 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   if (pathname === '/api/kult/validate' && method === 'POST') {
     const userId = await getUserId(request, url, env);
     if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
-    return jsonRes(DepmBackend.services.kult.validate((await parseBody(request)).document));
+    return jsonRes(await DepmBackend.services.service.engineer({ ...(await parseBody(request)), mode: 'validate' }));
   }
 
   if (pathname === '/api/kult/engine' && method === 'POST') {

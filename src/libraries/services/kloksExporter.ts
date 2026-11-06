@@ -134,13 +134,7 @@ ${t.assertions
     .join('\n\n');
   const smokeTest = `  it('executes the generated service smoke path', async () => {\n    await ${serviceClassName}Service.start();\n    const res = await ${serviceClassName}Service.call('execute', ${JSON.stringify(smokeInput)});\n    expect(res).toBeDefined();\n  });`;
 
-  const testsTs = `import { describe, it, expect } from 'vitest';
-import { ${serviceClassName}Service } from '../src/index';
-
-describe('${doc.service.name} Authoritative Test Suite', () => {
-${testCasesCode || `  it('should initialize and execute without errors', async () => {\n    expect(${serviceClassName}Service).toBeDefined();\n  });`}
-});
-`;
+  const testsTs = `import { describe, it, expect } from 'vitest';\nimport { ${serviceClassName}Service } from '../src/index';\n\ndescribe('${doc.service.name} Authoritative Test Suite', () => {\n${testCasesCode ? testCasesCode + '\\n\\n' : ''}${smokeTest}\n});\n`;
 
   // 5. dist/index.d.ts
   const typesDts = `import { IService, ServiceDefinition } from '@ultrst-armada/krnl';

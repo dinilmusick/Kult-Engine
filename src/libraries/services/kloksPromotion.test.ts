@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { STARTER_KLOKS_ARITHMETIC_SERVICE } from "./starterServices.js";
-import { promoteKultServiceToKloks } from "./kloksPromotion.js";
+import { promoteKultServiceToKloks, type PromotionGitHubClient } from "./kloksPromotion.js";
 
 const makeGitHub = (files: Map<string, { content: string; sha: string }>) => {
   const commits: Array<{ path: string; content: string }> = [];

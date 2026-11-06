@@ -111,7 +111,7 @@ test("promotion target registry supports multiple targets and compatibility insp
   const { KloksPromotionTargetRegistry } = await import("./kloksPromotion.js");
   const registry = new KloksPromotionTargetRegistry();
   const makeTarget = (id: string) => ({
-    id, id: "test-target", account: "primary", repository: "repo-" + id, branch: "main", workflow: "ci.yml",
+    id, account: "primary", repository: "repo-" + id, branch: "main", workflow: "ci.yml",
     servicePath: "generated/" + id, exportPath: "src/index.ts",
     exportStatement: "export * from './generated/" + id + "/index.js';",
     packageJsonPath: "package.json", npmPackageName: "@example/" + id,

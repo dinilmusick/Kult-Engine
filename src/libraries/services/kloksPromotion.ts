@@ -29,7 +29,8 @@ export interface PromotionOptions {
   timeoutMs?: number;
   pollIntervalMs?: number;
   engineer?: (files: { path: string; content: string }[], timeoutMs?: number) => Promise<EngineeringResult>;
-  fetchImpl?: typeof fetch;\n  dryRun?: boolean;
+  fetchImpl?: typeof fetch;
+  dryRun?: boolean;
 }
 
 const decodeBase64 = (value: string): string => {
@@ -66,7 +67,21 @@ export async function promoteKultServiceToKloks(
   const packageFile = await github.getFile(target.account, target.repository, target.packageJsonPath, target.branch);
   if (!packageFile) return { success: false, status: "failed", changedFiles: [], commitShas: [], diagnostics: ["Target package.json was not found."], validation, engineering };
   const packageJson = readJson<Record<string, unknown>>(packageFile.content);
-  const nextVersion = encodeVersion(String(packageJson.version || "0.0.0"), artifact.contractDiff.versionRecommendation);
+  const currentVersion = String(packageJson.version || "0.0.0");
+  const manifestPath = joinPath(target.servicePath, "kloks.manifest.json");
+  const existingManifest = await github.getFile(target.account, target.repository, manifestPath, target.branch);
+  if (existingManifest) {
+    try {
+      const parsed = readJson<Record<string, unknown>>(existingManifest.content);
+      if (parsed.contractFingerprint === artifact.manifest.contractFingerprint) {
+        return {
+          success: true, status: "noop", version: currentVersion, changedFiles: [], commitShas: [],
+          diagnostics: ["Target already contains the same service contract fingerprint."], validation, engineering,
+        };
+      }
+    } catch { /* malformed target metadata is replaceable */ }
+  }
+  const nextVersion = encodeVersion(currentVersion, artifact.contractDiff.versionRecommendation);
   packageJson.version = nextVersion;
 
   const exportExisting = await github.getFile(target.account, target.repository, target.exportPath, target.branch);
@@ -76,7 +91,12 @@ export async function promoteKultServiceToKloks(
   changedFiles.push({ path: target.exportPath, content: exportUpdated, sha: exportExisting?.sha });
   changedFiles.push({ path: target.packageJsonPath, content: JSON.stringify(packageJson, null, 2) + "\n", sha: packageFile.sha });
 
-  if (options.dryRun) return {\n    success: true, status: "dry_run", version: nextVersion, changedFiles: changedFiles.map((file) => file.path), commitShas: [],\n    diagnostics: [...diagnostics, "Dry-run completed without mutation, workflow dispatch or publication verification."], validation, engineering,\n  };\n\n  const commitShas: string[] = [];
+  if (options.dryRun) return {
+    success: true, status: "dry_run", version: nextVersion, changedFiles: changedFiles.map((file) => file.path), commitShas: [],
+    diagnostics: [...diagnostics, "Dry-run completed without mutation, workflow dispatch or publication verification."], validation, engineering,
+  };
+
+  const commitShas: string[] = [];
   for (const file of changedFiles) {
     const existing = file.sha ? { sha: file.sha } : await github.getFile(target.account, target.repository, file.path, target.branch);
     const commit = await github.commitFile(target.account, target.repository, file.path, file.content, "feat(kult): promote " + document.service.name + " v" + nextVersion, target.branch, existing?.sha);

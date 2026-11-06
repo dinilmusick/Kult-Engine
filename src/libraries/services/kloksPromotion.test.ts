@@ -4,7 +4,7 @@ import type { KloksGeneratedArtifact } from './kloksExporter';
 
 const artifact: KloksGeneratedArtifact = {
   packageName: '@ultrst-armada/kloks-example',
-  files: [{ path: 'src/index.ts', content: 'export const example = 1;\n' }],
+  files: [{ path: 'src/index.ts', content: 'export const example = 1;\n', type: 'source' }],
   manifest: { serviceId: 'example.service', name: 'Example Service', version: '1.0.0' },
   changeSummary: 'test',
   contractDiff: { addedSymbols: ['ExampleService'], changedSignatures: [], versionRecommendation: 'MINOR' },

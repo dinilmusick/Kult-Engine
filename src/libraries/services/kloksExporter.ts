@@ -7,7 +7,7 @@
 import type { ServiceDocument } from '../types/serviceIR';
 import { compileServicePipelineCode } from './serviceCodeCompiler';
 
-export interface KloksGeneratedArtifact {
+function stableFingerprint(doc: ServiceDocument): string {\n  const source = JSON.stringify({ id: doc.service.id, version: doc.service.version, inputs: doc.service.inputPorts, outputs: doc.service.outputPorts, assets: doc.assets });\n  let hash = 2166136261;\n  for (let i = 0; i < source.length; i += 1) hash = Math.imul(hash ^ source.charCodeAt(i), 16777619);\n  return (hash >>> 0).toString(16);\n}\n\nexport interface KloksGeneratedArtifact {
   packageName: string;
   files: {
     path: string;
@@ -45,8 +45,8 @@ export function generateKloksArtifact(doc: ServiceDocument): KloksGeneratedArtif
         },
       },
       dependencies: {
-        '@ultrst-armada/krnl': '^1.0.2',
-        '@ultrst-armada/kloks': '^1.5.2',
+        '@ultrst-armada/krnl': '^1.0.9',
+        '@ultrst-armada/kloks': '^1.24.0',
       },
       scripts: {
         typecheck: 'tsc --noEmit',
@@ -72,7 +72,7 @@ export function generateKloksArtifact(doc: ServiceDocument): KloksGeneratedArtif
       authority: 'KULT_ENGINE',
       runtime: 'krnlts',
       entrypoint: './dist/index.js',
-      contractFingerprint: `kloks_sig_${Date.now().toString(36)}`,
+      contractFingerprint: `kloks_sig_${stableFingerprint(doc)}`,
       inputs: doc.service.inputPorts,
       outputs: doc.service.outputPorts,
       nodeCount: doc.nodes.length,
@@ -116,6 +116,7 @@ export default ${serviceClassName}Service;
 `;
 
   // 4. tests/service.test.ts
+  const smokeInput = Object.fromEntries(doc.service.inputPorts.map((port) => [port.name, port.defaultValue ?? null]));
   const testCasesCode = doc.tests
     .map(
       (t) => `  it('${t.name}', async () => {
@@ -131,6 +132,7 @@ ${t.assertions
   });`
     )
     .join('\n\n');
+  const smokeTest = `  it('executes the generated service smoke path', async () => {\n    await ${serviceClassName}Service.start();\n    const res = await ${serviceClassName}Service.call('execute', ${JSON.stringify(smokeInput)});\n    expect(res).toBeDefined();\n  });`;
 
   const testsTs = `import { describe, it, expect } from 'vitest';
 import { ${serviceClassName}Service } from '../src/index';

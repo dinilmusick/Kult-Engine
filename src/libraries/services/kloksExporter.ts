@@ -49,6 +49,7 @@ export function generateKloksArtifact(doc: ServiceDocument): KloksGeneratedArtif
         '@ultrst-armada/kloks': '^1.24.0',
       },
       scripts: {
+        lint: 'node scripts/lint.mjs',
         typecheck: 'tsc --noEmit',
         test: 'vitest run',
       },
@@ -151,6 +152,31 @@ export default ${serviceClassName}Service;
       { path: 'src/index.ts', content: sourceTs, type: 'source' },
       { path: 'tests/service.test.ts', content: testsTs, type: 'test' },
       { path: 'dist/index.d.ts', content: typesDts, type: 'types' },
+      {
+        path: 'scripts/lint.mjs',
+        content: `import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+const files = [];
+async function walk(dir) {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const target = join(dir, entry.name);
+    if (entry.isDirectory()) await walk(target);
+    else if (/\\.(ts|tsx|js|jsx)$/.test(entry.name)) files.push(target);
+  }
+}
+const errors = [];
+await walk(join(process.cwd(), 'src'));
+for (const file of files) {
+  const source = await readFile(file, 'utf8');
+  if (source.split(/\\r?\\n/).length > 200) errors.push(file + ': exceeds 200 lines');
+  if (/\\beval\\s*\\(|\\brequire\\s*\\(/.test(source)) errors.push(file + ': dynamic execution is forbidden');
+  if (/(?:from\\s+|import\\s*\\()\\s*["'](?:\\.\\.\\/){2,}|["'](?:@\\/)?Skipo\\//.test(source)) errors.push(file + ': direct Skipo import is forbidden');
+}
+if (errors.length) { console.error(errors.join('\\n')); process.exit(1); }
+console.log('Kult lint passed: ' + files.length + ' source files');
+`,
+        type: 'config',
+      },
       {
         path: 'tsconfig.json',
         content: JSON.stringify({

@@ -41,6 +41,17 @@ export function validateGeneratedService(files: GeneratedServiceFile[]): Service
       });
     }
 
+    if (file.path === 'src/index.ts' && !/createServiceDefinition\\s*\\(/.test(file.content)) diagnostics.push({
+      path: file.path,
+      code: 'KRNL_SERVICE_DEFINITION',
+      message: 'Generated service entrypoint must use the KRNLTS service-definition API.',
+    });
+    if (file.path === 'src/index.ts' && !/createService\\s*\\(/.test(file.content)) diagnostics.push({
+      path: file.path,
+      code: 'KRNL_SERVICE_RUNTIME',
+      message: 'Generated service entrypoint must instantiate through KRNLTS createService.',
+    });
+
     if (forbiddenImports.test(file.content)) diagnostics.push({
       path: file.path, code: 'LAW_L20_IMPORT_ISOLATION',
       message: 'Direct Skipo/root-relative framework import is forbidden; use hydrated libraries.',

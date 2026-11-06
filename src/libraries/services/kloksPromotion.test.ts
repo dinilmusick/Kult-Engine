@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { KloksPromotionPipeline, type PromotionProvider } from './kloksPromotion';
 import type { KloksGeneratedArtifact } from './kloksExporter';
+import { KloksPromotionRegistry } from './kloksPromotionRegistry';
 
 const artifact: KloksGeneratedArtifact = {
   packageName: '@ultrst-armada/kloks-example',
@@ -48,4 +49,36 @@ async function run(): Promise<void> {
   assert.equal(repeated.changedFiles.length, 0);
 }
 
+
+async function verifyRegistry(): Promise<void> {
+  const registry = new KloksPromotionRegistry();
+  registry.register({
+    id: 'test-target',
+    repository: 'dinilmusick/Kloks',
+    branch: 'main',
+    serviceRoot: 'packages/services/src/generated',
+    exportFile: 'packages/services/src/index.ts',
+    manifestFile: 'packages/services/kloks.manifest.json',
+    packageFile: 'package.json',
+    workflow: 'CI',
+    packageName: '@ultrst-armada/kloks',
+  });
+  assert.equal(registry.get('test-target').repository, 'dinilmusick/Kloks');
+  assert.equal(registry.list().length, 1);
+  const compatible = registry.inspect(registry.get('test-target'), {
+    name: '@ultrst-armada/kloks',
+    version: '1.0.0',
+    private: false,
+  }, { services: [] });
+  assert.equal(compatible.compatible, true);
+  const incompatible = registry.inspect(registry.get('test-target'), {
+    name: '@other/package',
+    version: 'bad',
+    private: true,
+  }, {});
+  assert.equal(incompatible.compatible, false);
+  assert.equal(incompatible.reasons.length >= 3, true);
+}
+
 void run();
+void verifyRegistry();

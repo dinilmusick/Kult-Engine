@@ -25,7 +25,7 @@ test("promotion validates, inserts files, updates exports and bumps version", as
   ]);
   const fake = makeGitHub(files);
   const result = await promoteKultServiceToKloks(STARTER_KLOKS_ARITHMETIC_SERVICE, {
-    account: "primary", repository: "dinilmusick/Kloks", branch: "main", workflow: "ci.yml",
+    id: "primary", account: "primary", repository: "dinilmusick/Kloks", branch: "main", workflow: "ci.yml",
     servicePath: "packages/services/src/generated/arithmetic", exportPath: "packages/services/src/index.ts",
     exportStatement: "export * from './generated/arithmetic/index.js';",
     packageJsonPath: "packages/services/package.json", npmPackageName: "@ultrst-armada/kloks",
@@ -104,4 +104,27 @@ test("promotion is idempotent after the first successful promotion", async () =>
   const second = await promoteKultServiceToKloks(STARTER_KLOKS_ARITHMETIC_SERVICE, target, fake.client, options);
   assert.equal(second.status, "noop");
   assert.equal(fake.commits.length, commitCount);
+});
+
+
+test("promotion target registry supports multiple targets and compatibility inspection", async () => {
+  const { KloksPromotionTargetRegistry } = await import("./kloksPromotion.js");
+  const registry = new KloksPromotionTargetRegistry();
+  const makeTarget = (id: string) => ({
+    id, account: "primary", repository: "repo-" + id, branch: "main", workflow: "ci.yml",
+    servicePath: "generated/" + id, exportPath: "src/index.ts",
+    exportStatement: "export * from './generated/" + id + "/index.js';",
+    packageJsonPath: "package.json", npmPackageName: "@example/" + id,
+  });
+  registry.register(makeTarget("one"));
+  registry.register(makeTarget("two"));
+  assert.equal(registry.list().length, 2);
+  const fake = makeGitHub(new Map([
+    ["package.json", { content: btoa("{}"), sha: "pkg" }],
+    ["src/index.ts", { content: btoa(""), sha: "index" }],
+    [".github/workflows/ci.yml", { content: btoa("name: CI"), sha: "workflow" }],
+  ]));
+  const compatibility = await registry.inspectCompatibility("one", fake.client);
+  assert.equal(compatibility.compatible, true);
+  assert.equal(compatibility.checks.workflow, true);
 });

@@ -14,7 +14,7 @@ export class KultCanonicalAuthClient {
   constructor(private readonly baseUrl = DEFAULT_LUTH_URL, private readonly applicationOrigin = '') {}
 
   private async request(path: string, init: RequestInit = {}): Promise<Response> {
-    return fetch(this.baseUrl.replace(/\\/+$/, '') + path, {
+    return fetch(this.baseUrl.replace(/\/+$/, '') + path, {
       ...init,
       credentials: init.credentials || 'include',
       headers: { 'Content-Type': 'application/json', ...(this.token ? { Authorization: 'Bearer ' + this.token } : {}), ...(init.headers || {}) },

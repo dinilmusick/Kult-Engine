@@ -123,7 +123,7 @@ export default ${serviceClassName}Service;
     .map(
       (t) => `  it('${t.name}', async () => {
     await ${serviceClassName}Service.start();
-    const res = await ${serviceClassName}Service.call('execute', ${JSON.stringify(t.input)});
+    const res: any = await ${serviceClassName}Service.call('execute', ${JSON.stringify(t.input)});
     expect(res).toBeDefined();
 ${t.assertions
   .map(
@@ -134,7 +134,7 @@ ${t.assertions
   });`
     )
     .join('\n\n');
-  const smokeTest = `  it('executes the generated service smoke path', async () => {\n    await ${serviceClassName}Service.start();\n    const res = await ${serviceClassName}Service.call('execute', ${JSON.stringify(smokeInput)});\n    expect(res).toBeDefined();\n  });`;
+  const smokeTest = `  it('executes the generated service smoke path', async () => {\n    await ${serviceClassName}Service.start();\n    const res: any = await ${serviceClassName}Service.call('execute', ${JSON.stringify(smokeInput)});\n    expect(res).toBeDefined();\n  });`;
 
   const testsTs = `import { describe, it, expect } from 'vitest';\nimport { ${serviceClassName}Service } from '../src/index.js';\n\ndescribe('${doc.service.name} Authoritative Test Suite', () => {\n${testCasesCode ? testCasesCode + '\n\n' : ''}${smokeTest}\n});\n`;
 

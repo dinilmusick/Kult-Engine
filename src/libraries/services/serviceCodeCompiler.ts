@@ -59,7 +59,7 @@ export function compileServicePipelineCode(doc: ServiceDocument): string {
         lines.push(`    wireValues.set('${node.id}:${p.id}', inputs_${cleanId}['${p.name}']);`);
       }
     } else if (node.type === 'ServiceAFacade' || node.type === 'ServiceA') {
-      lines.push(`    const out_${cleanId}: any = await ServiceAFacade.execute(inputs_${cleanId}['operation'] || 'add', inputs_${cleanId});`);
+      lines.push(`    const out_${cleanId}: any = await ServiceAFacade.execute(inputs_${cleanId}['operation'] || inputs_${cleanId}['op'] || 'add', inputs_${cleanId});`);
       lines.push(`    wireValues.set('${node.id}:result', out_${cleanId}?.result ?? 0);`);
     } else if (node.type === 'ServiceBFacade' || node.type === 'ServiceB') {
       lines.push(`    const out_${cleanId}: any = await ServiceBFacade.execute(inputs_${cleanId}['operation'] || 'increment', inputs_${cleanId});`);

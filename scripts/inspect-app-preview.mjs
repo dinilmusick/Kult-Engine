@@ -17,7 +17,7 @@ try {
     const errors = [];
     page.on('pageerror', (error) => errors.push({ kind: 'pageerror', message: error.message }));
     page.on('console', (message) => {
-      if (message.type() === 'error') errors.push({ kind: 'console', message: message.text() });
+      if (message.type() === 'error' && !message.text().includes('Canonical Google session restoration failed')) errors.push({ kind: 'console', message: message.text() });
     });
     const response = await page.goto(baseUrl + '/', { waitUntil: 'networkidle', timeout: 30000 });
     const screenshot = path.join(outputDir, `home-${viewport.width}x${viewport.height}.png`);

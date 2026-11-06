@@ -215,6 +215,14 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
     if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
     return jsonRes(DepmBackend.services.kult.validate((await parseBody(request)).document));
   }
+
+  if (pathname === '/api/kult/engine' && method === 'POST') {
+    const userId = await getUserId(request, url, env);
+    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
+    const body = await parseBody(request);
+    return jsonRes(await DepmBackend.services.service.engineer(body));
+  }
+
   if (pathname === '/api/kult/execute' && method === 'POST') {
     const userId = await getUserId(request, url, env);
     if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);

@@ -80,7 +80,7 @@ export const kultServiceAuthoring = {
   engineer: async (input: {
     serviceId?: string;
     document?: ServiceDocument;
-    mode?: 'validate' | 'run' | 'test' | 'debug' | 'artifact';
+    mode?: 'validate' | 'run' | 'test' | 'debug' | 'artifact' | 'verify';
     inputs?: Record<string, unknown>;
     timeoutMs?: number;
   } = {}) => {
@@ -104,11 +104,11 @@ export const kultServiceAuthoring = {
 
   promote: async (input: { serviceId?: string; document?: ServiceDocument } = {}) => {
     const doc = input.document || (input.serviceId ? serviceStore.get(input.serviceId) : undefined) || STARTER_KLOKS_ARITHMETIC_SERVICE;
-    const validation = validateServiceDocument(doc);
-    if (!validation.isValid) {
-      return { success: false, error: `Promotion rejected: ${validation.errorCount} blocking errors`, errors: validation.errors };
+    const engineering = await kultServiceAuthoring.engineer({ document: doc, mode: 'verify' });
+    if (!engineering.success) {
+      return { success: false, error: 'Promotion blocked by service engineering verification.', engineering };
     }
-    const artifact = generateKloksArtifact(doc);
+    const artifact = engineering.artifact;
     return {
       success: true,
       serviceId: doc.service.id,
@@ -117,6 +117,7 @@ export const kultServiceAuthoring = {
       manifest: artifact.manifest,
       contractDiff: artifact.contractDiff,
       filesCount: artifact.files.length,
+      engineering,
     };
   },
 };

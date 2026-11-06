@@ -105,3 +105,24 @@ test("promotion is idempotent after the first successful promotion", async () =>
   assert.equal(second.status, "noop");
   assert.equal(fake.commits.length, commitCount);
 });
+
+test("promotion target registry supports multiple targets and compatibility inspection", async () => {
+  const { KloksPromotionTargetRegistry } = await import("./kloksPromotion.js");
+  const registry = new KloksPromotionTargetRegistry();
+  const target = {
+    id: "registry-target", account: "primary", repository: "repo", branch: "main", workflow: "ci.yml",
+    servicePath: "generated/service", exportPath: "src/index.ts",
+    exportStatement: "export * from './generated/service/index.js';",
+    packageJsonPath: "package.json", npmPackageName: "@example/service",
+  };
+  registry.register(target);
+  assert.equal(registry.list().length, 1);
+  const fake = makeGitHub(new Map([
+    ["package.json", { content: btoa("{}"), sha: "pkg" }],
+    ["src/index.ts", { content: btoa(""), sha: "index" }],
+    [".github/workflows/ci.yml", { content: btoa("name: CI"), sha: "workflow" }],
+  ]));
+  const compatibility = await registry.inspectCompatibility("registry-target", fake.client);
+  assert.equal(compatibility.compatible, true);
+  assert.equal(compatibility.checks.workflow, true);
+});

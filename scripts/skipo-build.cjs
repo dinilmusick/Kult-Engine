@@ -34,17 +34,15 @@ try {
 
   // 2. Single Universal Polyglot Backend bundle
   const nodeBuiltins = [
-    'http', 'https', 'fs', 'fs/promises', 'path', 'os', 'crypto',
-    'child_process', 'stream', 'util', 'events', 'dgram', 'net',
-    'tls', 'buffer', 'url', 'zlib', 'worker_threads',
-  ];
-  const externalFlags = [
-    "'--external:node:*'",
-    ...nodeBuiltins.map((mod) => `--external:${mod}`),
-  ].join(' ');
+    'http', 'https', 'http2', 'events', 'stream', 'buffer', 'fs', 'fs/promises', 'path', 'os',
+    'crypto', 'worker_threads', 'cluster', 'dgram', 'dns', 'readline', 'vm',
+    'querystring', 'process', 'assert', 'tty', 'perf_hooks', 'string_decoder',
+    'child_process', 'util', 'net', 'tls', 'url', 'zlib', 'inspector',
+    '@aws-sdk/*', 'node:*'
+  ].map((m) => `'--external:${m}'`).join(' ');
 
   run(
-    `npx esbuild src/backend/adapters/universalEntry.ts --bundle --platform=neutral --format=esm --alias:crypto=node:crypto ${externalFlags} --outfile=api/index.js`,
+    `npx esbuild src/backend/adapters/universalEntry.ts --bundle --platform=neutral --main-fields=module,main --format=esm --alias:crypto=node:crypto --alias:child_process=./src/polyfills/child_process.ts --alias:@ultrst-armada/kloks/wasm-runtime=./src/libraries/shims/wasmRuntimeShim.ts --alias:@huggingface/transformers=./src/libraries/shims/browserModelShim.ts --alias:onnxruntime-web=./src/libraries/shims/browserModelShim.ts --alias:cactus-needle=./src/libraries/shims/browserModelShim.ts --alias:@dinilmusick/gutts/models=./src/libraries/shims/browserModelShim.ts --define:import.meta.url='"https://kult.internal/api/index.js"' ${nodeBuiltins} --outfile=api/index.js`,
     'Bundling Single Universal Polyglot Backend (api/index.js)'
   );
 

@@ -1,7 +1,8 @@
 import { AikoRuntime, type AikoAgentDefinition, type AikoCapability } from '@ultrst-armada/kloks/aiko';
 import { AIKeyServiceFacade } from '@ultrst-armada/kloks/krnl-ai-services';
 import { CapabilityExecutionRuntime, CapabilityRegistry, ContextResolver, type AgentContext, type CapabilityDescriptor, type RuntimeContext } from '@ultrst-armada/kloks/semantic-runtime';
-import { guttsApiDefinitions, executeGuttsApi, resolveSemanticInput, rankSemanticInputCandidates } from '@dinilmusick/gutts';
+import { guttsApiDefinitions, executeGuttsApi } from '@dinilmusick/gutts/api';
+import { resolveSemanticInput, rankSemanticInputCandidates } from '@dinilmusick/gutts/semantic-input';
 
 export interface ApplicationAgentOptions { id: string; name: string; version?: string; backend: Record<string, unknown>; }
 export interface ApplicationAgent { handle(request: string, context: RuntimeContext): Promise<unknown>; execute(capabilityId: string, input: unknown, context: RuntimeContext): Promise<unknown>; capabilities(): CapabilityDescriptor[]; manifest(): unknown; aiko(): AikoRuntime; }

@@ -24,6 +24,13 @@ export default defineConfig(() => {
         "@skipo/core": path.resolve(__dirname, "src/libraries/skipo/core/index.ts"),
         "@skipo/backend": path.resolve(__dirname, "src/libraries/skipo/backend/index.ts"),
         "@skipo/systems": path.resolve(__dirname, "src/libraries/skipo/systems/index.ts"),
+        "@huggingface/transformers": path.resolve(__dirname, "src/libraries/shims/browserModelShim.ts"),
+        "cactus-needle": path.resolve(__dirname, "src/libraries/shims/browserModelShim.ts"),
+        "onnxruntime-web": path.resolve(__dirname, "src/libraries/shims/browserModelShim.ts"),
+        "@dinilmusick/gutts/models": path.resolve(__dirname, "src/libraries/shims/browserModelShim.ts"),
+        "@dinilmusick/gutts/storage": path.resolve(__dirname, "src/libraries/shims/browserModelShim.ts"),
+        googleapis: path.resolve(__dirname, "src/libraries/shims/browserModelShim.ts"),
+        "node-fetch": path.resolve(__dirname, "src/libraries/shims/browserModelShim.ts"),
       },
     },
     server: {

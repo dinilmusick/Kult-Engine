@@ -1,5 +1,5 @@
 {
-  "name": "my-app",
+  "name": "kult",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build",
+    "build": "node scripts/skipo-build.cjs",
     "start": "tsx server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist",

@@ -1,5 +1,7 @@
 name = "kult-engine"
-main = "api/index.js"
+# Deploy the existing universal Fetch API adapter directly as the Worker entry.
+# Vite builds only the browser assets in dist/; it does not emit api/index.js.
+main = "src/backend/adapters/httpsAdapter.ts"
 compatibility_date = "2024-10-01"
 compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]
 
@@ -9,12 +11,8 @@ binding = "ASSETS"
 run_worker_first = true
 not_found_handling = "single-page-application"
 
-[build]
-command = "npm run build"
-
 # Configure SYSTEM_DATABASE_URL_1 as a mandatory Cloudflare Worker Secret.
 # SYSTEM_DATABASE_URL_2 and SYSTEM_DATABASE_URL_3 are optional secret fallbacks.
-
 
 [secrets]
 required = ["SYSTEM_DATABASE_URL"]

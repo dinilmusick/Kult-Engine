@@ -20,7 +20,7 @@ async function findUser(identifier: string, env: any) {
   if (!raw) return null;
   try {
     const result = await queryUnifiedDb(
-      'SELECT id, email, username, name, role, avatar_glyph, email_verified, trust_level, status, app_profiles FROM "srkl_application_profiles" WHERE id = $1 OR LOWER(email) = LOWER($1) LIMIT 1',
+      'SELECT id, email, username, name, role, avatar_glyph, app_profiles FROM "srkl_application_profiles" WHERE id = $1 OR LOWER(email) = LOWER($1) LIMIT 1',
       [raw],
       env
     );
@@ -33,7 +33,7 @@ async function findUser(identifier: string, env: any) {
 function safeUser(row: any) {
   return { id: row.id, email: row.email, username: row.username || String(row.email || '').split('@')[0],
     name: row.name || row.display_name || String(row.email || '').split('@')[0], role: row.role || 'user',
-    avatarGlyph: row.avatar_glyph, emailVerified: row.email_verified, trustLevel: row.trust_level, status: row.status || 'ACTIVE' };
+    avatarGlyph: row.avatar_glyph, status: 'ACTIVE' };
 }
 
 function workspaceList(row: any): KultWorkspace[] {

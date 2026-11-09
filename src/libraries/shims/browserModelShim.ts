@@ -25,6 +25,9 @@ export class ModelLibrary {}
 export const guttsModelDefinitions: unknown[] = [];
 export const guttsModelById: Record<string, unknown> = {};
 
+export const google = {};
+export const drive_v3 = {};
+
 export class Needle3 {
   complete() { return Promise.resolve(''); }
   embed() { return Promise.resolve([]); }
@@ -73,6 +76,8 @@ export default {
   ModelLibrary,
   guttsModelDefinitions,
   guttsModelById,
+  google,
+  drive_v3,
   Needle3,
   needle3CompleteApi,
   needle3Metadata,

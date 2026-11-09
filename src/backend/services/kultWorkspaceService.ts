@@ -1,5 +1,4 @@
 import { queryUnifiedDb } from '@ultrst-armada/kloks/backend';
-import { neon } from '@neondatabase/serverless';
 
 export type WorkspaceStorageProvider = 'local_fs' | 'backblaze_b2';
 export interface KultWorkspace {
@@ -15,41 +14,17 @@ function profiles(row: any): Record<string, any> {
   return row.app_profiles || {};
 }
 
-function systemDatabaseUrls(env: any): string[] {
-  const urls = [
-    env?.SYSTEM_DATABASE_URL_1,
-    env?.SYSTEM_DATABASE_URL_2,
-    env?.SYSTEM_DATABASE_URL_3,
-    env?.SYSTEM_DATABASE_URL,
-    env?.DATABASE_URL,
-  ];
-  return [...new Set(urls.map((value) => String(value || '').trim()).filter(Boolean))];
-}
-
+/** Resolve the Luth principal's application profile from SRKL-owned profile storage. */
 async function findUser(identifier: string, env: any) {
   const raw = String(identifier || '').trim();
   if (!raw) return null;
-
-  // Kult deployments use the numbered SYSTEM_DATABASE_URL_* control-plane
-  // variables. Query those directly first so authentication does not depend
-  // on a connector-specific environment-variable convention.
-  for (const url of systemDatabaseUrls(env)) {
-    try {
-      const sql = neon(url);
-      const rows = await sql`SELECT * FROM "ultrst-users"
-        WHERE id = ${raw} OR LOWER(email) = LOWER(${raw})
-        LIMIT 1`;
-      if (rows[0]) return rows[0];
-    } catch {
-      // Try the next configured system database before falling back.
-    }
-  }
-
   try {
-    const byId = await queryUnifiedDb('SELECT * FROM "ultrst-users" WHERE id = $1 LIMIT 1', [raw], env);
-    if (byId.rows && byId.rows[0]) return byId.rows[0];
-    const byEmail = await queryUnifiedDb('SELECT * FROM "ultrst-users" WHERE LOWER(email) = LOWER($1) LIMIT 1', [raw], env);
-    return byEmail.rows && byEmail.rows[0] ? byEmail.rows[0] : null;
+    const result = await queryUnifiedDb(
+      'SELECT id, email, username, name, role, avatar_glyph, email_verified, trust_level, status, app_profiles FROM "srkl_application_profiles" WHERE id = $1 OR LOWER(email) = LOWER($1) LIMIT 1',
+      [raw],
+      env
+    );
+    return result.rows?.[0] ?? null;
   } catch {
     return null;
   }
@@ -61,8 +36,6 @@ function safeUser(row: any) {
     avatarGlyph: row.avatar_glyph, emailVerified: row.email_verified, trustLevel: row.trust_level, status: row.status || 'ACTIVE' };
 }
 
-export { systemDatabaseUrls };
-
 function workspaceList(row: any): KultWorkspace[] {
   const list = profiles(row).kult?.workspaces;
   return Array.isArray(list) ? list : [];
@@ -70,7 +43,7 @@ function workspaceList(row: any): KultWorkspace[] {
 
 async function saveWorkspaces(row: any, workspaces: KultWorkspace[], env: any) {
   const p = profiles(row); p.kult = { ...(p.kult || {}), workspaces };
-  await queryUnifiedDb('UPDATE "ultrst-users" SET app_profiles = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(p), row.id], env);
+  await queryUnifiedDb('UPDATE "srkl_application_profiles" SET app_profiles = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(p), row.id], env);
   return workspaces;
 }
 
@@ -95,14 +68,14 @@ export async function findUserWorkspace(identifier: string, workspaceId: string,
 
 export async function getWorkspaces(identifier: string, env: any = {}) {
   const row = await findUser(identifier, env);
-  if (!row) return { success: false, status: 404, error: 'User not found.', workspaces: [] };
+  if (!row) return { success: false, status: 404, error: 'User profile not found.', workspaces: [] };
   const workspaces = workspaceList(row);
   return { success: true, status: 200, workspaces, activeWorkspaceId: workspaces[0]?.id || null };
 }
 
 export async function createWorkspace(identifier: string, input: any = {}, env: any = {}) {
   const row = await findUser(identifier, env);
-  if (!row) return { success: false, status: 404, error: 'User not found.' };
+  if (!row) return { success: false, status: 404, error: 'User profile not found.' };
   const provider = input.storageProvider || input.storageConfig?.provider;
   const bucket = input.b2BucketName || input.storageConfig?.bucketName;
   if ((provider === 'backblaze_b2' || provider === 'backblaze') && !bucket) return { success: false, status: 400, error: 'A Backblaze B2 bucket must be selected.' };
@@ -112,7 +85,7 @@ export async function createWorkspace(identifier: string, input: any = {}, env: 
 }
 
 export async function updateWorkspace(identifier: string, input: any = {}, env: any = {}) {
-  const row = await findUser(identifier, env); if (!row) return { success: false, status: 404, error: 'User not found.' };
+  const row = await findUser(identifier, env); if (!row) return { success: false, status: 404, error: 'User profile not found.' };
   const list = workspaceList(row); const id = input.workspaceId || input.id; const index = list.findIndex((w) => w.id === id);
   if (index < 0) return { success: false, status: 404, error: 'Workspace not found.' };
   list[index] = normalize({ ...input, ...(input.updates || {}) }, list[index]); await saveWorkspaces(row, list, env);
@@ -120,7 +93,7 @@ export async function updateWorkspace(identifier: string, input: any = {}, env: 
 }
 
 export async function deleteWorkspace(identifier: string, workspaceId: string, env: any = {}) {
-  const row = await findUser(identifier, env); if (!row) return { success: false, status: 404, error: 'User not found.' };
+  const row = await findUser(identifier, env); if (!row) return { success: false, status: 404, error: 'User profile not found.' };
   const list = workspaceList(row); const workspaces = list.filter((w) => w.id !== workspaceId);
   if (workspaces.length === list.length) return { success: false, status: 404, error: 'Workspace not found.' };
   await saveWorkspaces(row, workspaces, env); return { success: true, status: 200, deletedId: workspaceId, workspaces };

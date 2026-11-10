@@ -11360,12 +11360,14 @@ __export(browserModelShim_exports, {
   createWhistle: () => createWhistle,
   default: () => browserModelShim_default,
   downloadModel: () => downloadModel,
+  drive_v3: () => drive_v3,
   env: () => env,
   ettinRerankApi: () => ettinRerankApi3,
   ettinReranker150MMetadata: () => ettinReranker150MMetadata3,
   ettinReranker17MMetadata: () => ettinReranker17MMetadata3,
   ettinReranker32MMetadata: () => ettinReranker32MMetadata3,
   ettinReranker68MMetadata: () => ettinReranker68MMetadata3,
+  google: () => google,
   guttsModelById: () => guttsModelById3,
   guttsModelDefinitions: () => guttsModelDefinitions3,
   miniLML6Metadata: () => miniLML6Metadata3,
@@ -11378,7 +11380,7 @@ __export(browserModelShim_exports, {
   whistleMetadata: () => whistleMetadata3,
   whistleTranscribeApi: () => whistleTranscribeApi3
 });
-var pipeline, env, createNeedle, createWhistle, downloadModel, ModelResidency2, ModelLibrary2, guttsModelDefinitions3, guttsModelById3, Needle3, needle3CompleteApi3, needle3Metadata3, SmolLM2, smolLM2GenerateApi3, smolLM2Metadata3, Whistle, whistleTranscribeApi3, whistleMetadata3, EttinReranker, EttinReranker17M, EttinReranker32M, EttinReranker68M, EttinReranker150M, ettinRerankApi3, ettinReranker17MMetadata3, ettinReranker32MMetadata3, ettinReranker68MMetadata3, ettinReranker150MMetadata3, MiniLM, miniLMSimilarityApi3, miniLML6Metadata3, browserModelShim_default;
+var pipeline, env, createNeedle, createWhistle, downloadModel, ModelResidency2, ModelLibrary2, guttsModelDefinitions3, guttsModelById3, google, drive_v3, Needle3, needle3CompleteApi3, needle3Metadata3, SmolLM2, smolLM2GenerateApi3, smolLM2Metadata3, Whistle, whistleTranscribeApi3, whistleMetadata3, EttinReranker, EttinReranker17M, EttinReranker32M, EttinReranker68M, EttinReranker150M, ettinRerankApi3, ettinReranker17MMetadata3, ettinReranker32MMetadata3, ettinReranker68MMetadata3, ettinReranker150MMetadata3, MiniLM, miniLMSimilarityApi3, miniLML6Metadata3, browserModelShim_default;
 var init_browserModelShim = __esm({
   "src/libraries/shims/browserModelShim.ts"() {
     pipeline = async () => {
@@ -11405,6 +11407,8 @@ var init_browserModelShim = __esm({
     };
     guttsModelDefinitions3 = [];
     guttsModelById3 = {};
+    google = {};
+    drive_v3 = {};
     Needle3 = class {
       complete() {
         return Promise.resolve("");
@@ -11464,6 +11468,8 @@ var init_browserModelShim = __esm({
       ModelLibrary: ModelLibrary2,
       guttsModelDefinitions: guttsModelDefinitions3,
       guttsModelById: guttsModelById3,
+      google,
+      drive_v3,
       Needle3,
       needle3CompleteApi: needle3CompleteApi3,
       needle3Metadata: needle3Metadata3,
@@ -252206,7 +252212,6 @@ var PROJECTS_ROOT3 = path72.join(process.cwd(), "projects");
 var AUTH_FILE_PATH = path82.resolve(".skipo/accounts.json");
 
 // src/backend/services/kultWorkspaceService.ts
-init_serverless();
 function profiles(row) {
   if (!row || !row.app_profiles) return {};
   if (typeof row.app_profiles === "string") {
@@ -252218,34 +252223,16 @@ function profiles(row) {
   }
   return row.app_profiles || {};
 }
-function systemDatabaseUrls(env2) {
-  const urls = [
-    env2?.SYSTEM_DATABASE_URL_1,
-    env2?.SYSTEM_DATABASE_URL_2,
-    env2?.SYSTEM_DATABASE_URL_3,
-    env2?.SYSTEM_DATABASE_URL,
-    env2?.DATABASE_URL
-  ];
-  return [...new Set(urls.map((value) => String(value || "").trim()).filter(Boolean))];
-}
 async function findUser(identifier, env2) {
   const raw = String(identifier || "").trim();
   if (!raw) return null;
-  for (const url of systemDatabaseUrls(env2)) {
-    try {
-      const sql = ys(url);
-      const rows = await sql`SELECT * FROM "ultrst-users"
-        WHERE id = ${raw} OR LOWER(email) = LOWER(${raw})
-        LIMIT 1`;
-      if (rows[0]) return rows[0];
-    } catch {
-    }
-  }
   try {
-    const byId = await queryUnifiedDb('SELECT * FROM "ultrst-users" WHERE id = $1 LIMIT 1', [raw], env2);
-    if (byId.rows && byId.rows[0]) return byId.rows[0];
-    const byEmail = await queryUnifiedDb('SELECT * FROM "ultrst-users" WHERE LOWER(email) = LOWER($1) LIMIT 1', [raw], env2);
-    return byEmail.rows && byEmail.rows[0] ? byEmail.rows[0] : null;
+    const result = await queryUnifiedDb(
+      'SELECT id, email, username, name, role, avatar_glyph, app_profiles FROM "srkl_application_profiles" WHERE id = $1 OR LOWER(email) = LOWER($1) LIMIT 1',
+      [raw],
+      env2
+    );
+    return result.rows?.[0] ?? null;
   } catch {
     return null;
   }
@@ -252257,7 +252244,7 @@ function workspaceList(row) {
 async function saveWorkspaces(row, workspaces, env2) {
   const p2 = profiles(row);
   p2.kult = { ...p2.kult || {}, workspaces };
-  await queryUnifiedDb('UPDATE "ultrst-users" SET app_profiles = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(p2), row.id], env2);
+  await queryUnifiedDb('UPDATE "srkl_application_profiles" SET app_profiles = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(p2), row.id], env2);
   return workspaces;
 }
 function normalize(input, existing) {
@@ -252289,13 +252276,13 @@ async function findUserWorkspace2(identifier, workspaceId, env2 = {}) {
 }
 async function getWorkspaces2(identifier, env2 = {}) {
   const row = await findUser(identifier, env2);
-  if (!row) return { success: false, status: 404, error: "User not found.", workspaces: [] };
+  if (!row) return { success: false, status: 404, error: "User profile not found.", workspaces: [] };
   const workspaces = workspaceList(row);
   return { success: true, status: 200, workspaces, activeWorkspaceId: workspaces[0]?.id || null };
 }
 async function createWorkspace3(identifier, input = {}, env2 = {}) {
   const row = await findUser(identifier, env2);
-  if (!row) return { success: false, status: 404, error: "User not found." };
+  if (!row) return { success: false, status: 404, error: "User profile not found." };
   const provider = input.storageProvider || input.storageConfig?.provider;
   const bucket = input.b2BucketName || input.storageConfig?.bucketName;
   if ((provider === "backblaze_b2" || provider === "backblaze") && !bucket) return { success: false, status: 400, error: "A Backblaze B2 bucket must be selected." };
@@ -252306,7 +252293,7 @@ async function createWorkspace3(identifier, input = {}, env2 = {}) {
 }
 async function updateWorkspace3(identifier, input = {}, env2 = {}) {
   const row = await findUser(identifier, env2);
-  if (!row) return { success: false, status: 404, error: "User not found." };
+  if (!row) return { success: false, status: 404, error: "User profile not found." };
   const list = workspaceList(row);
   const id6 = input.workspaceId || input.id;
   const index = list.findIndex((w) => w.id === id6);
@@ -252317,7 +252304,7 @@ async function updateWorkspace3(identifier, input = {}, env2 = {}) {
 }
 async function deleteWorkspace3(identifier, workspaceId, env2 = {}) {
   const row = await findUser(identifier, env2);
-  if (!row) return { success: false, status: 404, error: "User not found." };
+  if (!row) return { success: false, status: 404, error: "User profile not found." };
   const list = workspaceList(row);
   const workspaces = list.filter((w) => w.id !== workspaceId);
   if (workspaces.length === list.length) return { success: false, status: 404, error: "Workspace not found." };

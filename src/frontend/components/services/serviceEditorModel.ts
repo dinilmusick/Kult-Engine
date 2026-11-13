@@ -21,7 +21,7 @@ export function validateServiceEditor(input: {
   if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(input.name.trim())) errors.push("Service name must start with a letter and contain only letters, numbers, _ or -.");
   if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(input.version.trim())) errors.push("Version must be semantic version syntax such as 0.1.0.");
   if (!input.folder.trim()) errors.push("Service folder is required.");
-  if (!input.libraries.includes("@ultrst-armada/gutts")) errors.push("@ultrst-armada/gutts is required.");
+  if (!input.libraries.includes("@dinilmusick/gutts")) errors.push("@dinilmusick/gutts is required.");
   const functionNames = new Set<string>();
   for (const fn of input.functionalities) {
     if (!fn.name.trim()) errors.push("Functionality name is required.");

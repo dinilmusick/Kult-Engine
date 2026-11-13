@@ -27,7 +27,7 @@ test('Kult can execute through the GitHub Actions provider contract', async () =
 test('Kult imports the canonical Kloks WebContainer service surface', async () => {
   const { WebContainerServiceDefinition } = await import('@ultrst-armada/kloks/development');
   const operationNames = Object.values(WebContainerServiceDefinition.operations as Record<string, { name: string }>).map(operation => operation.name);
-  assert.deepEqual(operationNames, ['boot', 'mount', 'run', 'runCommand', 'teardown', 'command']);
+  assert.deepEqual(operationNames, ['boot', 'mount', 'run', 'runCommand', 'spawnCommand', 'teardown', 'command']);
 });
 
 test('Kult propagates Playwright service-UI inspection errors and screenshots', async () => {
@@ -50,8 +50,8 @@ test('Kult propagates Playwright service-UI inspection errors and screenshots', 
 
 test('Kult loads the shared Kloks inspector by default in Node engineering sessions', async () => {
   const { createKultBrowserInspection } = await import('./developmentRuntime.js');
-  await assert.rejects(
-    createKultBrowserInspection().inspectServiceUI({ url: 'http://localhost:4173/service-editor' }),
-    /Kloks browser-inspection is unavailable/,
-  );
+  const result = await createKultBrowserInspection().inspectServiceUI({ url: 'http://localhost:4173/service-editor' });
+  assert.equal(typeof result, 'object');
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.length > 0);
 });

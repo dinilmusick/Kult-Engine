@@ -179,7 +179,7 @@ export function App() {
                 ...STARTER_SERVICES[0],
                 service: { ...STARTER_SERVICES[0].service, id: "local." + Date.now().toString(36), name: "New Local Service", description: "" },
                 nodes: [], edges: [], assets: [], tests: [],
-                metadata: { author: userId || "local", libraries: ["@ultrst-armada/gutts"], functionalities: [], orchestrations: [] }
+                metadata: { author: userId || "local", libraries: ["@dinilmusick/gutts"], functionalities: [], orchestrations: [] }
               };
               const created: LocalServiceRecord = {
                 id: document.service.id,

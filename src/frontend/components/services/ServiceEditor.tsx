@@ -25,7 +25,7 @@ export const ServiceEditor: React.FC<{
 }> = ({ service, onBack, onSave }) => {
   const [doc, setDoc] = React.useState<ServiceDocument>(service.document);
   const [folder, setFolder] = React.useState(service.folder);
-  const [libraries, setLibraries] = React.useState<string[]>(Array.isArray(service.document.metadata?.libraries) ? service.document.metadata.libraries as string[] : ['@ultrst-armada/gutts']);
+  const [libraries, setLibraries] = React.useState<string[]>(Array.isArray(service.document.metadata?.libraries) ? service.document.metadata.libraries as string[] : ['@dinilmusick/gutts']);
   const [functionalities, setFunctionalities] = React.useState<FunctionalityAsset[]>(
     Array.isArray(service.document.metadata?.functionalities)
       ? (service.document.metadata.functionalities as Array<Partial<FunctionalityAsset> & { id: string; name: string; description?: string; inputSignature?: string; outputSignature?: string; tags?: string[] }>).map(raw =>
@@ -118,7 +118,7 @@ export const ServiceEditor: React.FC<{
 
       <section style={{position:'absolute',left:`${splitX}%`,top:0,width:`${100-splitX}%`,height:`${splitY}%`}} className="p-4 overflow-auto bg-[var(--skipo-bg)] border-b border-[var(--skipo-border-color)]/20">
         <div className="flex items-center justify-between mb-3"><h3 className="font-black text-xs flex items-center gap-2"><Package size={14}/> Imported libraries</h3><span className="text-[9px]">service-level libraries</span></div>
-        <div className="grid grid-cols-2 gap-2">{libraries.map(lib=><div key={lib} className={`${card} text-xs font-bold`}>{lib}{lib==='@ultrst-armada/gutts'&&<div className="text-[9px] font-normal text-[var(--skipo-text-muted)] mt-1">default import</div>}</div>)}</div>
+        <div className="grid grid-cols-2 gap-2">{libraries.map(lib=><div key={lib} className={`${card} text-xs font-bold`}>{lib}{lib==='@dinilmusick/gutts'&&<div className="text-[9px] font-normal text-[var(--skipo-text-muted)] mt-1">default import</div>}</div>)}</div>
       </section>
 
       <section style={{position:'absolute',left:0,top:`${splitY}%`,width:`${splitX}%`,height:`${100-splitY}%`}} className="p-4 overflow-auto bg-[var(--skipo-bg)] border-r border-[var(--skipo-border-color)]/20">

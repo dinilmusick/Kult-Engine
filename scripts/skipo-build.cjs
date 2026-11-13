@@ -42,7 +42,7 @@ try {
   ].map((m) => `'--external:${m}'`).join(' ');
 
   run(
-    `npx esbuild src/backend/adapters/universalEntry.ts --bundle --platform=neutral --main-fields=module,main --format=esm --alias:crypto=node:crypto --alias:child_process=./src/polyfills/child_process.ts --alias:@ultrst-armada/kloks/wasm-runtime=./src/libraries/shims/wasmRuntimeShim.ts --alias:@huggingface/transformers=./src/libraries/shims/browserModelShim.ts --alias:onnxruntime-web=./src/libraries/shims/browserModelShim.ts --alias:cactus-needle=./src/libraries/shims/browserModelShim.ts --alias:@dinilmusick/gutts/models=./src/libraries/shims/browserModelShim.ts --define:import.meta.url='"https://kult.internal/api/index.js"' ${nodeBuiltins} --outfile=api/index.js`,
+    `npx esbuild src/backend/adapters/universalEntry.ts --bundle --platform=neutral --main-fields=module,main --format=esm --alias:crypto=node:crypto --alias:child_process=./src/polyfills/child_process.ts --alias:@ultrst-armada/kloks/wasm-runtime=./src/libraries/shims/wasmRuntimeShim.ts --alias:@huggingface/transformers=./src/libraries/shims/browserModelShim.ts --alias:onnxruntime-web=./src/libraries/shims/browserModelShim.ts --alias:cactus-needle/browser=./src/libraries/shims/browserModelShim.ts --alias:cactus-needle=./src/libraries/shims/browserModelShim.ts --alias:@dinilmusick/gutts/models=./src/libraries/shims/browserModelShim.ts --define:import.meta.url='"https://kult.internal/api/index.js"' ${nodeBuiltins} --outfile=api/index.js`,
     'Bundling Single Universal Polyglot Backend (api/index.js)'
   );
 

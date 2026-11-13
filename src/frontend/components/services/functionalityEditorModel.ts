@@ -57,7 +57,7 @@ export function createFunctionalityAsset(input: {
     stateData: 'export interface StateData {}',
     helpers: [],
     events: [],
-    libraries: input.libraries?.length ? [...input.libraries] : ['@ultrst-armada/gutts'],
+    libraries: input.libraries?.length ? [...input.libraries] : ['@dinilmusick/gutts'],
   };
 }
 
@@ -71,7 +71,7 @@ export function normalizeFunctionalityAsset(
     stateData: raw?.stateData?.trim() || 'export interface StateData {}',
     helpers: Array.isArray(raw?.helpers) ? raw.helpers : [],
     events: Array.isArray(raw?.events) ? raw.events : [],
-    libraries: Array.isArray(raw?.libraries) && raw.libraries.length ? raw.libraries : ['@ultrst-armada/gutts'],
+    libraries: Array.isArray(raw?.libraries) && raw.libraries.length ? raw.libraries : ['@dinilmusick/gutts'],
   };
 }
 
@@ -122,6 +122,6 @@ export function setFunctionalityLibrary(asset: FunctionalityAsset, library: stri
 }
 
 export function removeFunctionalityLibrary(asset: FunctionalityAsset, library: string): FunctionalityAsset {
-  if (library === '@ultrst-armada/gutts') return asset;
+  if (library === '@dinilmusick/gutts') return asset;
   return { ...asset, libraries: asset.libraries.filter(item => item !== library) };
 }

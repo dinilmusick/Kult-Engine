@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "./libraries/skipo/ui/theme/tokens.css";
+@import "@ultrst-armada/floks/ui/theme/tokens.css";
 
 html, body {
   margin: 0;

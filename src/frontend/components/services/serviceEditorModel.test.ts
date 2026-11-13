@@ -6,7 +6,7 @@ const base = {
   name: "AuthenticationService",
   version: "0.1.0",
   folder: "services/authentication-service",
-  libraries: ["@ultrst-armada/gutts"],
+  libraries: ["@dinilmusick/gutts"],
   functionalities: [
     { id: "a", name: "createUser", description: "", inputSignature: "CreateUserInput", outputSignature: "User", tags: [] },
     { id: "b", name: "sendWelcomeEmail", description: "", inputSignature: "EmailInput", outputSignature: "EmailResult", tags: [] },

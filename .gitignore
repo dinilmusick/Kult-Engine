@@ -11,3 +11,4 @@ public/assets/aistudio/*
 __pycache__/
 *.pyc
 .turbo/
+artifacts/

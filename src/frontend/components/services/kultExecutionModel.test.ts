@@ -17,7 +17,7 @@ test('builds an executable WebContainer project with runtime dependencies and co
     name: 'Echo',
     inputSignature: 'string',
     outputSignature: 'string',
-    libraries: ['@ultrst-armada/gutts', 'zod'],
+    libraries: ['@dinilmusick/gutts', 'zod'],
   });
   fn.mainFunction = 'export async function main(input: unknown, state: StateData) { return { input, hasState: !!state }; }';
   fn.helpers = [{ id: 'h1', name: 'helper', signature: 'declare function helper(): void;', implementation: 'export function helper() {}' }];
@@ -32,7 +32,7 @@ test('builds an executable WebContainer project with runtime dependencies and co
   assert.equal(tsconfig.compilerOptions.strict, true);
   assert.equal(tsconfig.compilerOptions.noEmit, true);
   assert.deepEqual(packageJson.dependencies, {
-    '@ultrst-armada/gutts': 'latest',
+    '@dinilmusick/gutts': 'latest',
     zod: 'latest',
   });
   assert.match(project.files['functionalities/echo.ts'].file.contents, /helper/);

@@ -29,7 +29,7 @@ test('functionality context exposes state, helpers, events, and libraries', () =
   assert.match(context.declaration, /StateData/);
   assert.match(context.declaration, /hashPassword/);
   assert.match(context.declaration, /onAuthenticated/);
-  assert.deepEqual(context.libraryNames, ['@ultrst-armada/gutts']);
+  assert.deepEqual(context.libraryNames, ['@dinilmusick/gutts']);
 });
 
 test('helper and event additions/removals update the asset', () => {
@@ -45,10 +45,10 @@ test('helper and event additions/removals update the asset', () => {
 
 test('libraries are deduplicated and gutts cannot be removed', () => {
   const asset = createFunctionalityAsset({ id: 'fn-1', name: 'foo' });
-  const unchanged = setFunctionalityLibrary(asset, '@ultrst-armada/gutts');
-  assert.deepEqual(unchanged.libraries, ['@ultrst-armada/gutts']);
+  const unchanged = setFunctionalityLibrary(asset, '@dinilmusick/gutts');
+  assert.deepEqual(unchanged.libraries, ['@dinilmusick/gutts']);
   const updated = setFunctionalityLibrary(asset, 'zod');
-  assert.deepEqual(updated.libraries, ['@ultrst-armada/gutts', 'zod']);
+  assert.deepEqual(updated.libraries, ['@dinilmusick/gutts', 'zod']);
   assert.equal(removeHelper(updated, 'missing').helpers.length, 0);
   assert.equal(removeEvent(updated, 'missing').events.length, 0);
 });
@@ -66,5 +66,5 @@ test('legacy functionality metadata receives safe editor defaults', () => {
   assert.match(normalized.stateData, /interface StateData/);
   assert.deepEqual(normalized.helpers, []);
   assert.deepEqual(normalized.events, []);
-  assert.deepEqual(normalized.libraries, ['@ultrst-armada/gutts']);
+  assert.deepEqual(normalized.libraries, ['@dinilmusick/gutts']);
 });

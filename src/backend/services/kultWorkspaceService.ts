@@ -1,4 +1,4 @@
-import { queryUnifiedDb } from '@ultrst-armada/kloks/backend';
+import { queryUnifiedDb } from '@ultrst-armada/kloks/backend/node';
 
 export type WorkspaceStorageProvider = 'local_fs' | 'backblaze_b2';
 export interface KultWorkspace {

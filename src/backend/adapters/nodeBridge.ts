@@ -44,6 +44,6 @@ export async function adaptNodeRequest(
   webRes.headers.forEach((val: string, key: string) => {
     res.setHeader(key, val);
   });
-  const text = await webRes.text();
-  res.end(text);
+  const buffer = Buffer.from(await webRes.arrayBuffer());
+  res.end(buffer);
 }

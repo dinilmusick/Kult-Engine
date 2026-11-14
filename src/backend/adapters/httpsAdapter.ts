@@ -8,8 +8,9 @@ import { DepmBackend } from '../DepmBackend';
 import { handleAgentRoutes } from '../agent/runtime';
 import { adaptNodeRequest } from './nodeBridge';
 import { handleVaultRoutes } from './vaultRoutes';
-import { createLocalServiceFromKloksAsset, getKloksServiceAsset } from '../../libraries/services/assetDiscovery';
 import { resolveCanonicalUserId } from './canonicalIdentity';
+import { handleGuestRequest } from '../guest/guestSession.js';
+import { handleKultRoutes } from './kultRoutes.js';
 
 export interface Env {
   ENVIRONMENT?: string;
@@ -26,18 +27,10 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Workspace-Id, X-Vault-Key',
 };
-
-function jsonRes(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } });
-}
-
-async function parseBody(req: Request): Promise<any> {
-  try { return await req.json(); } catch { return {}; }
-}
-
-async function getUserId(req: Request, _url: URL, _env: Env): Promise<string> {
-  return resolveCanonicalUserId(req);
-}
+const jsonRes = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } });
+const parseBody = async (req: Request): Promise<any> => { try { return await req.json(); } catch { return {}; } };
+const getUserId = async (req: Request, _url: URL, _env: Env): Promise<string> => resolveCanonicalUserId(req);
 
 export async function fetchHandler(request: Request, env: Env = {}): Promise<Response> {
   const url = new URL(request.url);
@@ -55,6 +48,9 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   if (pathname === '/api/health' || pathname === '/health') {
     return jsonRes({ status: 'ok', service: 'depm-unified-engine', timestamp: new Date().toISOString() });
   }
+
+  const guestResponse = await handleGuestRequest(request);
+  if (guestResponse) return guestResponse;
 
   // Authentication is owned by SRKL. Legacy local login endpoints are intentionally unavailable.
   if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/admin/login') || pathname === '/api/auth/register') {
@@ -169,72 +165,10 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
   if (pathname === '/api/routes') {
     if (method === 'GET') return jsonRes(DepmBackend.services.routes.getAllRoutes());
     if (method === 'POST') return jsonRes(DepmBackend.services.routes.upsertRoute(await parseBody(request)));
-  }
-  if (pathname === '/api/skipo-agent/context' && method === 'GET') {
-    return jsonRes(DepmBackend.services.skipoAgent.inspect());
-  }
-  if (pathname === '/api/skipo-agent/suggest' && method === 'GET') {
-    return jsonRes({ suggestions: DepmBackend.services.skipoAgent.suggest(url.searchParams.get('q') || '') });
-  }
-  if (pathname === '/api/skipo-agent/promotion-plan' && method === 'POST') {
-    return jsonRes(DepmBackend.services.skipoAgent.promotionPlan(await parseBody(request)));
-  }
-  if (pathname === '/api/kult/npm/search' && method === 'GET') {
-    const q = url.searchParams.get('q') || '';
-    if (!q.trim()) return jsonRes({ success: true, packages: [] });
-    try {
-      const response = await fetch('https://registry.npmjs.org/-/v1/search?text=' + encodeURIComponent(q) + '&size=20');
-      const body = await response.json() as any;
-      const packages = (body.objects || []).map((x: any) => x.package?.name).filter(Boolean);
-      const preferred = packages.filter((name: string) => name.startsWith('@dinilmusick/') || name.startsWith('@ultrst-armada/'));
-      return jsonRes({ success: true, packages: [...preferred, ...packages.filter((n: string) => !preferred.includes(n))] });
-    } catch (error: any) {
-      return jsonRes({ success: false, packages: [], error: error?.message || 'npm registry unavailable' }, 502);
-    }
-  }
-  if (pathname === '/api/kult/kloks/services' && method === 'GET') {
-    const userId = await getUserId(request, url, env);
-    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
-    const { discoverKloksAssets } = await import('../../libraries/services/assetDiscovery');
-    return jsonRes({ success: true, services: discoverKloksAssets().filter((a: any) => a.category === 'services').map((a: any) => ({ ...a, id: encodeURIComponent(a.export) })) });
-  }
-  const copyMatch = pathname.match(/^\/api\/kult\/kloks\/services\/([^/]+)\/copy$/);
-  if (copyMatch && method === 'POST') {
-    const userId = await getUserId(request, url, env);
-    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
-    const asset = getKloksServiceAsset(copyMatch[1]);
-    if (!asset) return jsonRes({ success: false, status: 404, error: 'KLOKS service not found.' }, 404);
-    return jsonRes({ success: true, service: createLocalServiceFromKloksAsset(asset) });
-  }
-
-  if (pathname === '/api/kult/validate' && method === 'POST') {
-    const userId = await getUserId(request, url, env);
-    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
-    return jsonRes(await DepmBackend.services.service.engineer({ ...(await parseBody(request)), mode: 'validate' }));
-  }
-
-  if (pathname === '/api/kult/engine' && method === 'POST') {
-    const userId = await getUserId(request, url, env);
-    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
-    const body = await parseBody(request);
-    return jsonRes(await DepmBackend.services.service.engineer(body));
-  }
-
-  if (pathname === '/api/kult/execute' && method === 'POST') {
-    const userId = await getUserId(request, url, env);
-    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
-    const b = await parseBody(request);
-    return jsonRes(await DepmBackend.services.kult.execute(b.document, b.inputs));
-  }
-  if (pathname === '/api/kult/export' && method === 'POST') {
-    const userId = await getUserId(request, url, env);
-    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
-    return jsonRes(DepmBackend.services.kult.exportArtifact((await parseBody(request)).document));
-  }
-  if (pathname === '/api/kult/promote' && method === 'POST') {
-    const userId = await getUserId(request, url, env);
-    if (!userId) return jsonRes({ success: false, error: 'A valid SRKL session is required.' }, 401);
-    return jsonRes(await DepmBackend.services.kult.promote((await parseBody(request)).document));
+  if (pathname.startsWith('/api/kult/') || pathname.startsWith('/api/skipo-agent/')) {
+    const kultUserId = await getUserId(request, url, env);
+    const kultRes = await handleKultRoutes(request, url, kultUserId, jsonRes, parseBody);
+    if (kultRes) return kultRes;
   }
 
   // 7. Assets fallback for Frontend SPA
@@ -254,9 +188,6 @@ export async function fetchHandler(request: Request, env: Env = {}): Promise<Res
 }
 
 export default {
-  async fetch(request: Request, env: Env = {}, ctx?: any): Promise<Response> {
-    return fetchHandler(request, env);
-  },
+  fetch: (request: Request, env: Env = {}) => fetchHandler(request, env),
 };
-
 export { adaptNodeRequest };

@@ -21,8 +21,8 @@ importers:
         specifier: ^4.1.14
         version: 4.3.3(vite@6.4.5(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.15))
       '@ultrst-armada/floks':
-        specifier: ^2.0.0
-        version: 2.0.0(@aws-sdk/client-s3@3.1156.0)(@huggingface/transformers@4.3.2(@types/node@22.20.5))(@xyflow/react@12.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(cactus-needle@0.3.0)(d3-force@3.0.0)(lucide-react@0.546.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))(zustand@5.0.16(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)))
+        specifier: 2.0.3
+        version: 2.0.3(@aws-sdk/client-s3@3.1156.0)(@huggingface/transformers@4.3.2(@types/node@22.20.5))(@xyflow/react@12.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(cactus-needle@0.3.0)(d3-force@3.0.0)(lucide-react@0.546.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))(zustand@5.0.16(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)))
       '@ultrst-armada/frnlts':
         specifier: ^0.5.23
         version: 0.5.23(@aws-sdk/client-s3@3.1156.0)(@huggingface/transformers@4.3.2(@types/node@22.20.5))(cactus-needle@0.3.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
@@ -1154,8 +1154,8 @@ packages:
   '@types/node@22.20.5':
     resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
 
-  '@ultrst-armada/floks@2.0.0':
-    resolution: {integrity: sha512-uEKCyxKA+nhM08O3M8q8pJib8/u5LubvIJJpaBeI/Hey/Q7Vo8P4zQdhkT/+1MJjLlHCGU8bP88ZsypaYA2Cow==}
+  '@ultrst-armada/floks@2.0.3':
+    resolution: {integrity: sha512-TkOgcyuv2wVl4SsKKHfXkxhNr9JfQfiyOL5KIGUVE0bQrjrWZ4Rfm4CqIARwFQmAGSF6QIgMLSW5Y6P8z3dNuw==}
     peerDependencies:
       '@types/react': ^18.0.0 || ^19.0.0
       '@xyflow/react': ^12.8.6
@@ -2858,7 +2858,7 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@ultrst-armada/floks@2.0.0(@aws-sdk/client-s3@3.1156.0)(@huggingface/transformers@4.3.2(@types/node@22.20.5))(@xyflow/react@12.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(cactus-needle@0.3.0)(d3-force@3.0.0)(lucide-react@0.546.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))(zustand@5.0.16(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)))':
+  '@ultrst-armada/floks@2.0.3(@aws-sdk/client-s3@3.1156.0)(@huggingface/transformers@4.3.2(@types/node@22.20.5))(@xyflow/react@12.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(cactus-needle@0.3.0)(d3-force@3.0.0)(lucide-react@0.546.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))(zustand@5.0.16(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)))':
     dependencies:
       '@dinilmusick/gutts': 2.1.0(@aws-sdk/client-s3@3.1156.0)(@huggingface/transformers@4.3.2(@types/node@22.20.5))(cactus-needle@0.3.0)
       '@ultrst-armada/frnlts': 0.5.23(@aws-sdk/client-s3@3.1156.0)(@huggingface/transformers@4.3.2(@types/node@22.20.5))(cactus-needle@0.3.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
